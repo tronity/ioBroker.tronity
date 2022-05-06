@@ -1,0 +1,88 @@
+{
+	"common": {
+		"name": "tronity",
+		"version": "0.0.1",
+		"news": {
+			"0.0.1": {
+				"en": "initial release",
+				"de": "Erstveröffentlichung",
+				"ru": "Начальная версия",
+				"pt": "lançamento inicial",
+				"nl": "Eerste uitgave",
+				"fr": "Première version",
+				"it": "Versione iniziale",
+				"es": "Versión inicial",
+				"pl": "Pierwsze wydanie",
+				"zh-cn": "首次出版"
+			}
+		},
+		"title": "TRONITY",
+		"titleLang": {
+			"en": "TRONITY",
+			"de": "TRONITÄT",
+			"ru": "ТРОНИТИ",
+			"pt": "TRONIDADE",
+			"nl": "TRONITY",
+			"fr": "TRONITÉ",
+			"it": "TRONITÀ",
+			"es": "TRONIDAD",
+			"pl": "TRONIA",
+			"zh-cn": "创力"
+		},
+		"desc": {
+			"en": "Enables you to get vehicle data from your EV",
+			"de": "Ermöglicht es Ihnen, Fahrzeugdaten von Ihrem Elektrofahrzeug abzurufen",
+			"ru": "Позволяет получать данные об автомобиле с вашего электромобиля",
+			"pt": "Permite que você obtenha dados do veículo do seu EV",
+			"nl": "Hiermee kunt u voertuiggegevens ophalen van uw EV",
+			"fr": "Vous permet d'obtenir des données sur le véhicule à partir de votre véhicule électrique",
+			"it": "Ti consente di ottenere i dati del veicolo dal tuo veicolo elettrico",
+			"es": "Le permite obtener datos del vehículo de su EV",
+			"pl": "Umożliwia uzyskanie danych pojazdu z pojazdu elektrycznego",
+			"zh-cn": "使您能够从您的 EV 中获取车辆数据"
+		},
+		"authors": ["Sebastian <support@tronity.io>"],
+		"keywords": [
+			"BMW",
+			"MINI",
+			"Mercedes",
+			"Jaguar",
+			"Audi",
+			"Volkswagen",
+			"Skoda",
+			"Kia",
+			"Renault",
+			"Seat",
+			"Hyundai",
+			"Opel",
+			"Peugeot",
+			"Tesla",
+			"TRONITY"
+		],
+		"license": "MIT",
+		"platform": "Javascript/Node.js",
+		"main": "build/main.js",
+		"icon": "tronity.png",
+		"enabled": true,
+		"extIcon": "https://raw.githubusercontent.com/tronity/ioBroker.tronity/main/admin/tronity.png",
+		"readme": "https://github.com/tronity/ioBroker.tronity/blob/main/README.md",
+		"loglevel": "info",
+		"mode": "daemon",
+		"type": "vehicle",
+		"compact": true,
+		"connectionType": "cloud",
+		"dataSource": "poll",
+		"materialize": true,
+		"dependencies": [
+			{
+				"js-controller": ">=2.0.0"
+			}
+		]
+	},
+	"native": {
+		"option1": true,
+		"option2": "42"
+	},
+	"objects": [],
+	"instanceObjects": []
+}
