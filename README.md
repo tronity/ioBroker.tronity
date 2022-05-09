@@ -18,11 +18,14 @@ Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, 
 ## Changelog
 
 <!--
-	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
 
-### 1.0.1 (2022-05-09)
+### 1.1.0 (2022-05-09)
+
+-   small bugfixes
+
+### 1.0.0 (2022-05-09)
 
 -   initial release
 
