@@ -1,6 +1,6 @@
 {
   "name": "iobroker.tronity",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
   "author": {
     "name": "Sebastian",

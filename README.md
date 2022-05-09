@@ -22,7 +22,7 @@ Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, 
 	### **WORK IN PROGRESS**
 -->
 
-### **WORK IN PROGRESS**
+### 1.0.1 (2022-05-09)
 
 -   initial release
 
