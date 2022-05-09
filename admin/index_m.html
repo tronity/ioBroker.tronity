@@ -1,95 +1,127 @@
 <html>
+	<head>
+		<!-- Load ioBroker scripts and styles-->
+		<link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+		<link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css" />
 
-<head>
+		<script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
-	<!-- Load ioBroker scripts and styles-->
-	<link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
-	<link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+		<script type="text/javascript" src="../../js/translate.js"></script>
+		<script type="text/javascript" src="../../lib/js/materialize.js"></script>
+		<script type="text/javascript" src="../../js/adapter-settings.js"></script>
 
-	<script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
-	<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+		<!-- Load our own files -->
+		<link rel="stylesheet" type="text/css" href="style.css" />
+		<script type="text/javascript" src="words.js"></script>
 
-	<script type="text/javascript" src="../../js/translate.js"></script>
-	<script type="text/javascript" src="../../lib/js/materialize.js"></script>
-	<script type="text/javascript" src="../../js/adapter-settings.js"></script>
+		<script type="text/javascript">
+			function load(settings, onChange) {
+				if (!settings) return;
+				$('.value').each(function () {
+					var $key = $(this);
+					$key.val(settings[$key.attr('id')]);
+				});
+				onChange(false);
 
-	<!-- Load our own files -->
-	<link rel="stylesheet" type="text/css" href="style.css" />
-	<script type="text/javascript" src="words.js"></script>
+				$('#check').on('click', () => {
+					getIsAdapterAlive((isAlive) => {
+						if (!isAlive) {
+							showToast(null, _('Please start the Adapter first'));
+						} else {
+							$('#check').addClass('disabled');
+							getAdapterInstances((adapter) => {
+								sendTo(
+									adapter._id,
+									'validate',
+									{
+										client_id: $('#client_id').val(),
+										client_secret: $('#client_secret').val(),
+									},
+									(response) => {
+										$('#check').removeClass('disabled');
+										if (!response.success) {
+											showError('Please enter valid client_id and client_secret!');
+										}
 
-	<script type="text/javascript">
-		// This will be called by the admin adapter when the settings page loads
-		function load(settings, onChange) {
-			// example: select elements with id=key and class=value and insert value
-			if (!settings) return;
-			$('.value').each(function () {
-				var $key = $(this);
-				var id = $key.attr('id');
-				if ($key.attr('type') === 'checkbox') {
-					// do not call onChange direct, because onChange could expect some arguments
-					$key.prop('checked', settings[id])
-						.on('change', () => onChange())
-						;
-				} else {
-					// do not call onChange direct, because onChange could expect some arguments
-					$key.val(settings[id])
-						.on('change', () => onChange())
-						.on('keyup', () => onChange())
-						;
+										response.vehicles.forEach((vehicle) => {
+											let option = $('<option>', { value: vehicle.id }).text(
+												vehicle.displayName || vehicle.vin,
+											);
+											$('#vehicle_id').append(option);
+										});
+										$('#vehicle_id').val($('#vehicle_id option:first').val());
+										M.FormSelect.init(document.querySelectorAll('#vehicle_id'));
+										onChange();
+									},
+								);
+							});
+						}
+					});
+				});
+
+				if (M) M.updateTextFields();
+			}
+
+			function save(callback) {
+				const obj = {};
+				if (
+					$('#client_id').val().length == 0 ||
+					$('#client_secret').val().length == 0 ||
+					$('#vehicle_id').val().length == 0
+				) {
+					showMessage(_('Enter client_id, client_secret and select Car!'));
+					return;
 				}
-			});
-			onChange(false);
-			// reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
-			if (M) M.updateTextFields();
-		}
 
-		// This will be called by the admin adapter when the user presses the save button
-		function save(callback) {
-			// example: select elements with class=value and build settings object
-			var obj = {};
-			$('.value').each(function () {
-				var $this = $(this);
-				if ($this.attr('type') === 'checkbox') {
-					obj[$this.attr('id')] = $this.prop('checked');
-				} else if ($this.attr('type') === 'number') {
-					obj[$this.attr('id')] = parseFloat($this.val());
-				} else {
-					obj[$this.attr('id')] = $this.val();
-				}
-			});
-			callback(obj);
-		}
-	</script>
+				obj.client_id = $('#client_id').val();
+				obj.client_secret = $('#client_secret').val();
+				obj.vehicle_id = $('#vehicle_id').val();
+				callback(obj);
+			}
+		</script>
+	</head>
 
-</head>
-
-<body>
-
-	<div class="m adapter-container">
-
-		<div class="row">
-			<div class="col s12 m4 l2">
-				<img src="tronity.png" class="logo">
+	<body>
+		<div class="m adapter-container">
+			<div class="row">
+				<div class="col s12 m4 l2">
+					<img src="tronity.png" class="logo" />
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s12 m6">
+					<br />
+					<h5 class="translate">Adapter settings for Tronity:</h5>
+					<p class="translate">Description</p>
+					<a href="https://www.tronity.tech" target="_blank">https://www.tronity.tech</a>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s12 m6 input-field">
+					<input type="text" class="value" id="client_id" />
+					<label for="client_id">Client Id:</label>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s12 m6 input-field">
+					<input type="password" class="value" id="client_secret" />
+					<label for="client_secret">Client Secret:</label>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s2">
+					<a id="check" class="waves-effect waves-light btn"
+						><span class="translate">Check Login Data</span></a
+					>
+				</div>
+			</div>
+			<div class="row">
+				<div class="input-field col s12 m6">
+					<select id="vehicle_id" class="value"></select>
+					<label class="translate" for="vehicle_id">Select your Car</label>
+				</div>
 			</div>
 		</div>
-
-		<!-- Put your content here -->
-
-		<!-- For example columns with settings: -->
-		<div class="row">
-			<div class="col s6 input-field">
-				<input type="checkbox" class="value" id="option1" />
-				<label for="option1" class="translate">option1</label>
-			</div>
-
-			<div class="col s6 input-field">
-				<input type="text" class="value" id="option2" />
-				<label for="option2" class="translate">option2</label>
-			</div>
-		</div>
-
-	</div>
-
-</body>
-
+	</body>
 </html>

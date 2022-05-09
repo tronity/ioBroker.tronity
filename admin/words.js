@@ -2,40 +2,20 @@
 'use strict';
 
 systemDictionary = {
-	'tronity adapter settings': {
-		en: 'Adapter settings for tronity',
-		de: 'Adaptereinstellungen für tronity',
-		ru: 'Настройки адаптера для tronity',
-		pt: 'Configurações do adaptador para tronity',
-		nl: 'Adapterinstellingen voor tronity',
-		fr: "Paramètres d'adaptateur pour tronity",
-		it: "Impostazioni dell'adattatore per tronity",
-		es: 'Ajustes del adaptador para tronity',
-		pl: 'Ustawienia adaptera dla tronity',
-		'zh-cn': 'tronity的适配器设置',
+	'Adapter settings for Tronity': {
+		'en': 'Adapter settings for Tronity',
+		'de': 'Adaptereinstellungen für Tronity',
 	},
-	option1: {
-		en: 'option1',
-		de: 'Option 1',
-		ru: 'Опция 1',
-		pt: 'Opção 1',
-		nl: 'Optie 1',
-		fr: 'Option 1',
-		it: 'opzione 1',
-		es: 'Opción 1',
-		pl: 'opcja 1',
-		'zh-cn': '选项1',
+	'Description': {
+		'en': 'To retrieve data, client_id and client_secret must be entered from the Tronity Platform. Then check the values and select the vehicle.',
+		'de': 'Um Daten abzurufen müssen client_id und client_secret von der Tronity Platform eingegeben werden. Danach die Werte prüfen und das Fahrzeug auswählen.'
 	},
-	option2: {
-		en: 'option2',
-		de: 'Option 2',
-		ru: 'вариант 2',
-		pt: 'opção 2',
-		nl: 'Optie 2',
-		fr: 'Option 2',
-		it: 'opzione 2',
-		es: 'opcion 2',
-		pl: 'Opcja 2',
-		'zh-cn': '选项2',
+	'Check Login Data': {
+		'en': 'Check Login Data',
+		'de': 'Login-Daten prüfen'
 	},
+	'Select your Car': {
+		'en': 'Select your Car',
+		'de': 'Wählen Sie Ihr Fahrzeug aus'
+	}
 };

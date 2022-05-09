@@ -1,15 +1,11 @@
-/*
- * Created with @iobroker/create-adapter v2.1.1
- */
-
-// The adapter-core module gives you access to the core ioBroker functions
-// you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
-
-// Load your modules here, e.g.:
-// import * as fs from "fs";
+import got from 'got';
+import * as cache from 'memory-cache';
 
 class Tronity extends utils.Adapter {
+	private timeout: any = null;
+	private URL = 'https://api.tronity.tech';
+
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
 			...options,
@@ -17,135 +13,220 @@ class Tronity extends utils.Adapter {
 		});
 		this.on('ready', this.onReady.bind(this));
 		this.on('stateChange', this.onStateChange.bind(this));
-		// this.on('objectChange', this.onObjectChange.bind(this));
-		// this.on('message', this.onMessage.bind(this));
+		this.on('message', this.onMessage.bind(this));
 		this.on('unload', this.onUnload.bind(this));
 	}
 
-	/**
-	 * Is called when databases are connected and adapter received configuration.
-	 */
 	private async onReady(): Promise<void> {
-		// Initialize your adapter here
+		this.log.debug('Starting');
+		this.subscribeStates('command.*');
+		await this.setStateAsync('info.connection', false, true);
+		if (this.config.client_id && this.config.client_secret && this.config.vehicle_id) {
+			await this.setStateAsync('info.connection', true, true);
+			await this.initSetObject('command.Charging', 'boolean', 'data');
+			await this.initSetObject('odometer', 'number', 'data');
+			await this.initSetObject('range', 'number', 'data');
+			await this.initSetObject('level', 'number', 'data');
+			await this.initSetObject('charging', 'string', 'data');
+			await this.initSetObject('power', 'number', 'data');
+			await this.initSetObject('chargeRemainingTime', 'number', 'data');
+			await this.initSetObject('plugged', 'boolean', 'data');
+			await this.initSetObject('chargerPower', 'number', 'data');
+			await this.initSetObject('latitude', 'number', 'data');
+			await this.initSetObject('longitude', 'number', 'data');
+			await this.initSetObject('timestamp', 'number', 'data');
+			await this.initSetObject('lastUpdate', 'number', 'data');
 
-		// The adapters config (in the instance object everything under the attribute "native") is accessible via
-		// this.config:
-		this.log.info('config option1: ' + this.config.option1);
-		this.log.info('config option2: ' + this.config.option2);
+			await this.setStateAsync('info.connection', true, true);
+			await this.setStateAsync('command.Charging', false);
+			await this.updateVehicleData();
+		}
+	}
 
-		/*
-		For every state in the system there has to be also an object of type state
-		Here a simple template for a boolean variable named "testVariable"
-		Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
-		*/
-		await this.setObjectNotExistsAsync('testVariable', {
+	private async initSetObject(name: string, type: any, role: string): Promise<any> {
+		return this.setObjectNotExistsAsync(name, {
 			type: 'state',
 			common: {
-				name: 'testVariable',
-				type: 'boolean',
-				role: 'indicator',
-				read: true,
+				name,
+				type,
+				role,
 				write: true,
+				read: true,
 			},
 			native: {},
 		});
-
-		// In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-		this.subscribeStates('testVariable');
-		// You can also add a subscription for multiple states. The following line watches all states starting with "lights."
-		// this.subscribeStates('lights.*');
-		// Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
-		// this.subscribeStates('*');
-
-		/*
-			setState examples
-			you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
-		*/
-		// the variable testVariable is set to true as command (ack=false)
-		await this.setStateAsync('testVariable', true);
-
-		// same thing, but the value is flagged "ack"
-		// ack should be always set to true if the value is received from or acknowledged from the target system
-		await this.setStateAsync('testVariable', { val: true, ack: true });
-
-		// same thing, but the state is deleted after 30s (getState will return null afterwards)
-		await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
-
-		// examples for the checkPassword/checkGroup functions
-		let result = await this.checkPasswordAsync('admin', 'iobroker');
-		this.log.info('check user admin pw iobroker: ' + result);
-
-		result = await this.checkGroupAsync('admin', 'admin');
-		this.log.info('check group user admin group admin: ' + result);
 	}
 
-	/**
-	 * Is called when adapter shuts down - callback has to be called under any circumstances!
-	 */
+	private async getToken(): Promise<string> {
+		try {
+			if (cache.get(this.config.client_id)) {
+				return cache.get(this.config.client_id);
+			}
+			const token = (await got
+				.post(`${this.URL}/authentication`, {
+					json: {
+						client_id: this.config.client_id,
+						client_secret: this.config.client_secret,
+						grant_type: 'app',
+					},
+				})
+				.json()) as {
+				access_token: string;
+				expires_in: number;
+			};
+			cache.put(this.config.client_id, token.access_token, token.expires_in - 120);
+			return token.access_token;
+		} catch (e: any) {
+			this.log.error(e);
+			throw Error(e);
+		}
+	}
+
+	private async updateVehicleData(): Promise<void> {
+		try {
+			if (this.config.vehicle_id) {
+				const token = await this.getToken();
+				const status = (await got
+					.get(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`, {
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					})
+					.json()) as {
+					odometer: number;
+					range: number;
+					level: number;
+					charging: string;
+					chargeRemainingTime: number;
+					plugged: boolean;
+					chargerPower: number;
+					latitude: number;
+					longitude: number;
+					timestamp: number;
+					lastUpdate: number;
+				};
+				if (status.odometer) this.setState('odometer', status.odometer, true);
+				if (status.range) this.setState('range', status.range, true);
+				if (status.level) this.setState('level', status.level, true);
+				if (status.charging) this.setState('charging', status.charging, true);
+				if (status.chargeRemainingTime) this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
+				if (status.plugged) this.setState('plugged', status.plugged, true);
+				if (status.chargerPower) this.setState('chargerPower', status.chargerPower, true);
+				if (status.latitude) this.setState('latitude', status.latitude, true);
+				if (status.longitude) this.setState('longitude', status.longitude, true);
+				if (status.timestamp)
+					this.setState(
+						'timestamp',
+						typeof status.timestamp === 'number' ? status.timestamp : new Date(status.timestamp).getTime(),
+						true,
+					);
+				if (status.lastUpdate)
+					this.setState(
+						'lastUpdate',
+						typeof status.lastUpdate === 'number'
+							? status.lastUpdate
+							: new Date(status.lastUpdate).getTime(),
+						true,
+					);
+			}
+		} catch (e: any) {
+			this.log.error(e);
+		}
+		this.timeout = setTimeout(() => this.updateVehicleData(), 60 * 1000);
+	}
+
+	private async onMessage(msg: any): Promise<void> {
+		if (msg.command === 'validate') {
+			const client_id = msg.message.client_id;
+			const client_secret = msg.message.client_secret;
+
+			this.log.info('Try to validate login data and get vehicles');
+			try {
+				const token = (await got
+					.post(`${this.URL}/authentication`, {
+						json: {
+							client_id,
+							client_secret,
+							grant_type: 'app',
+						},
+					})
+					.json()) as {
+					access_token: string;
+					expires_in: number;
+				};
+				const vehicles = (await got
+					.get(`${this.URL}/tronity/vehicles?limit=1000`, {
+						headers: {
+							Authorization: `Bearer ${token.access_token}`,
+						},
+					})
+					.json()) as {
+					data: [];
+				};
+				this.sendTo(msg.from, msg.command, { success: true, vehicles: vehicles.data }, msg.callback);
+			} catch (e: any) {
+				this.log.error(e);
+				this.sendTo(msg.from, msg.command, { success: false }, msg.callback);
+			}
+		}
+	}
+
 	private onUnload(callback: () => void): void {
 		try {
-			// Here you must clear all timeouts or intervals that may still be active
-			// clearTimeout(timeout1);
-			// clearTimeout(timeout2);
-			// ...
-			// clearInterval(interval1);
-
+			if (this.timeout) clearTimeout(this.timeout);
 			callback();
 		} catch (e) {
 			callback();
 		}
 	}
 
-	// If you need to react to object changes, uncomment the following block and the corresponding line in the constructor.
-	// You also need to subscribe to the objects with `this.subscribeObjects`, similar to `this.subscribeStates`.
-	// /**
-	//  * Is called if a subscribed object changes
-	//  */
-	// private onObjectChange(id: string, obj: ioBroker.Object | null | undefined): void {
-	// 	if (obj) {
-	// 		// The object was changed
-	// 		this.log.info(`object ${id} changed: ${JSON.stringify(obj)}`);
-	// 	} else {
-	// 		// The object was deleted
-	// 		this.log.info(`object ${id} deleted`);
-	// 	}
-	// }
+	private async onStateChange(id: string, state: ioBroker.State | null | undefined): Promise<void> {
+		if (!state) return;
+		this.log.debug(`State Change: ${id} to ${state.val} ack ${state.ack}`);
 
-	/**
-	 * Is called if a subscribed state changes
-	 */
-	private onStateChange(id: string, state: ioBroker.State | null | undefined): void {
-		if (state) {
-			// The state was changed
-			this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
-		} else {
-			// The state was deleted
-			this.log.info(`state ${id} deleted`);
+		if (this.config.vehicle_id) {
+			const currentId = id.substring(this.namespace.length + 1);
+			switch (currentId) {
+				case 'command.Charging':
+					if (state.val) {
+						try {
+							const token = await this.getToken();
+							await got.post(
+								`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`,
+								{
+									headers: {
+										Authorization: `Bearer ${token}`,
+									},
+								},
+							);
+							this.log.info('Try to start charging!');
+						} catch (e: any) {
+							this.log.error(e);
+						}
+					} else {
+						try {
+							const token = await this.getToken();
+							await got.post(
+								`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`,
+								{
+									headers: {
+										Authorization: `Bearer ${token}`,
+									},
+								},
+							);
+							this.log.info('Try to stop charging!');
+						} catch (e: any) {
+							this.log.error(e);
+						}
+					}
+					break;
+			}
 		}
 	}
-
-	// If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
-	// /**
-	//  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-	//  * Using this method requires "common.messagebox" property to be set to true in io-package.json
-	//  */
-	// private onMessage(obj: ioBroker.Message): void {
-	// 	if (typeof obj === 'object' && obj.message) {
-	// 		if (obj.command === 'send') {
-	// 			// e.g. send email or pushover or whatever
-	// 			this.log.info('send command');
-
-	// 			// Send response in callback if required
-	// 			if (obj.callback) this.sendTo(obj.from, obj.command, 'Message received', obj.callback);
-	// 		}
-	// 	}
-	// }
 }
 
 if (require.main !== module) {
-	// Export the constructor in compact mode
 	module.exports = (options: Partial<utils.AdapterOptions> | undefined) => new Tronity(options);
 } else {
-	// otherwise start the instance directly
 	(() => new Tronity())();
 }

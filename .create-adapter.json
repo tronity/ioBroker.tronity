@@ -1,7 +1,7 @@
 {
 	"cli": true,
 	"target": "directory",
-	"adapterName": "tronity",
+	"adapterName": "TRONITY",
 	"title": "TRONITY",
 	"description": "Enables you to get vehicle data from your EV",
 	"keywords": [
@@ -19,6 +19,13 @@
 		"Opel",
 		"Peugeot",
 		"Tesla",
+		"Porsche",
+		"DS",
+		"Fiat",
+		"Ford",
+		"Smart",
+		"Vauxhall",
+		"Citroen",
 		"TRONITY"
 	],
 	"expert": "no",
@@ -39,7 +46,7 @@
 	"indentation": "Tab",
 	"quotes": "single",
 	"es6class": "yes",
-	"authorName": "Sebastian",
+	"authorName": "TRONITY",
 	"authorGithub": "tronity",
 	"authorEmail": "support@tronity.io",
 	"gitRemoteProtocol": "HTTPS",
