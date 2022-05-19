@@ -15,11 +15,30 @@
 
 Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen
 
+## Setup Adapter
+
+To setup the adapter you need a TRONITY Account. You can signup here:
+
+https://app.tronity.io/signup
+
+After you signup and added the car to TRONITY. You need a client_id and client_secret.
+To get this information please login at:
+
+https://app.tronity.tech/signin
+
+Please use the same login data like for your TRONITY Account. Now you should see an APP
+called TRONITY Extention. In this APP you can find client_id and client_secret to setup
+the adapter.
+
 ## Changelog
 
 <!--
 	### **WORK IN PROGRESS**
 -->
+
+### 1.1.1 (2022-05-20)
+
+-   small bugfixes
 
 ### 1.1.0 (2022-05-09)
 

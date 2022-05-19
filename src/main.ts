@@ -23,19 +23,19 @@ class Tronity extends utils.Adapter {
 		await this.setStateAsync('info.connection', false, true);
 		if (this.config.client_id && this.config.client_secret && this.config.vehicle_id) {
 			await this.setStateAsync('info.connection', true, true);
-			await this.initSetObject('command.Charging', 'boolean', 'data');
-			await this.initSetObject('odometer', 'number', 'data');
-			await this.initSetObject('range', 'number', 'data');
-			await this.initSetObject('level', 'number', 'data');
-			await this.initSetObject('charging', 'string', 'data');
-			await this.initSetObject('power', 'number', 'data');
-			await this.initSetObject('chargeRemainingTime', 'number', 'data');
-			await this.initSetObject('plugged', 'boolean', 'data');
-			await this.initSetObject('chargerPower', 'number', 'data');
-			await this.initSetObject('latitude', 'number', 'data');
-			await this.initSetObject('longitude', 'number', 'data');
-			await this.initSetObject('timestamp', 'number', 'data');
-			await this.initSetObject('lastUpdate', 'number', 'data');
+			await this.initSetObject('command.Charging', 'boolean', 'switch');
+			await this.initSetObject('odometer', 'number', 'level');
+			await this.initSetObject('range', 'number', 'level');
+			await this.initSetObject('level', 'number', 'level');
+			await this.initSetObject('charging', 'string', 'text');
+			await this.initSetObject('power', 'number', 'level');
+			await this.initSetObject('chargeRemainingTime', 'number', 'value.time');
+			await this.initSetObject('plugged', 'boolean', 'switch');
+			await this.initSetObject('chargerPower', 'number', 'level');
+			await this.initSetObject('latitude', 'number', 'value.gps.longitude');
+			await this.initSetObject('longitude', 'number', 'value.gps.latitude');
+			await this.initSetObject('timestamp', 'number', 'value.time');
+			await this.initSetObject('lastUpdate', 'number', 'value.time');
 
 			await this.setStateAsync('info.connection', true, true);
 			await this.setStateAsync('command.Charging', false);
@@ -105,15 +105,16 @@ class Tronity extends utils.Adapter {
 					timestamp: number;
 					lastUpdate: number;
 				};
-				if (status.odometer) this.setState('odometer', status.odometer, true);
-				if (status.range) this.setState('range', status.range, true);
-				if (status.level) this.setState('level', status.level, true);
-				if (status.charging) this.setState('charging', status.charging, true);
-				if (status.chargeRemainingTime) this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
-				if (status.plugged) this.setState('plugged', status.plugged, true);
-				if (status.chargerPower) this.setState('chargerPower', status.chargerPower, true);
-				if (status.latitude) this.setState('latitude', status.latitude, true);
-				if (status.longitude) this.setState('longitude', status.longitude, true);
+				if (status.odometer > -1) this.setState('odometer', status.odometer, true);
+				if (status.range > -1) this.setState('range', status.range, true);
+				if (status.level > -1) this.setState('level', status.level, true);
+				if (status.charging && status.charging.length > 0) this.setState('charging', status.charging, true);
+				if (status.chargeRemainingTime > 0)
+					this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
+				if (status.plugged !== null) this.setState('plugged', status.plugged, true);
+				if (status.chargerPower > 0) this.setState('chargerPower', status.chargerPower, true);
+				if (status.latitude !== null) this.setState('latitude', status.latitude, true);
+				if (status.longitude !== null) this.setState('longitude', status.longitude, true);
 				if (status.timestamp)
 					this.setState(
 						'timestamp',
@@ -184,7 +185,7 @@ class Tronity extends utils.Adapter {
 		if (!state) return;
 		this.log.debug(`State Change: ${id} to ${state.val} ack ${state.ack}`);
 
-		if (this.config.vehicle_id) {
+		if (this.config.vehicle_id && state.ack === false) {
 			const currentId = id.substring(this.namespace.length + 1);
 			switch (currentId) {
 				case 'command.Charging':
