@@ -1,26 +1,10 @@
+"use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -29,15 +13,19 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target, mod));
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var utils = __toESM(require("@iobroker/adapter-core"));
 var import_got = __toESM(require("got"));
 var cache = __toESM(require("memory-cache"));
 class Tronity extends utils.Adapter {
   constructor(options = {}) {
-    super(__spreadProps(__spreadValues({}, options), {
+    super({
+      ...options,
       name: "tronity"
-    }));
+    });
     this.timeout = null;
     this.URL = "https://api.tronity.tech";
     this.on("ready", this.onReady.bind(this));
@@ -129,9 +117,17 @@ class Tronity extends utils.Adapter {
         if (status.longitude !== null)
           this.setState("longitude", status.longitude, true);
         if (status.timestamp)
-          this.setState("timestamp", typeof status.timestamp === "number" ? status.timestamp : new Date(status.timestamp).getTime(), true);
+          this.setState(
+            "timestamp",
+            typeof status.timestamp === "number" ? status.timestamp : new Date(status.timestamp).getTime(),
+            true
+          );
         if (status.lastUpdate)
-          this.setState("lastUpdate", typeof status.lastUpdate === "number" ? status.lastUpdate : new Date(status.lastUpdate).getTime(), true);
+          this.setState(
+            "lastUpdate",
+            typeof status.lastUpdate === "number" ? status.lastUpdate : new Date(status.lastUpdate).getTime(),
+            true
+          );
       }
     } catch (e) {
       this.log.error(e);
@@ -183,11 +179,14 @@ class Tronity extends utils.Adapter {
           if (state.val) {
             try {
               const token = await this.getToken();
-              await import_got.default.post(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`, {
-                headers: {
-                  Authorization: `Bearer ${token}`
+              await import_got.default.post(
+                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
                 }
-              });
+              );
               this.log.info("Try to start charging!");
             } catch (e) {
               this.log.error(e);
@@ -195,11 +194,14 @@ class Tronity extends utils.Adapter {
           } else {
             try {
               const token = await this.getToken();
-              await import_got.default.post(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`, {
-                headers: {
-                  Authorization: `Bearer ${token}`
+              await import_got.default.post(
+                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
                 }
-              });
+              );
               this.log.info("Try to stop charging!");
             } catch (e) {
               this.log.error(e);
