@@ -104,11 +104,9 @@
 			"Volkswagen",
 			"TRONITY"
 		],
-		"license": "MIT",
 		"licenseInformation": {
 			"type": "free",
-			"url": "https://opensource.org/licenses/MIT",
-			"text": "Permission is hereby granted, free of charge, to any person obtaining a copy of this software..."
+			"license": "MIT"
 		},
 		"platform": "Javascript/Node.js",
 		"icon": "tronity.png",
