@@ -104,6 +104,7 @@
 			"Volkswagen",
 			"TRONITY"
 		],
+		"license": "MIT",
 		"licenseInformation": {
 			"type": "free",
 			"url": "https://opensource.org/licenses/MIT",
