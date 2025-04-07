@@ -1,9 +1,22 @@
 {
 	"common": {
 		"name": "tronity",
-		"version": "1.2.0",
+		"version": "1.2.1",
 		"tier": 3,
 		"news": {
+			"1.2.1": {
+				"en": "small bugfixes",
+				"uk": "small bugfixes",
+				"de": "kleine Fehlerbehebungen",
+				"ru": "небольшие исправления",
+				"pt": "pequenas correções de bugs",
+				"nl": "kleine bugfixes",
+				"fr": "petites corrections de bugs",
+				"it": "piccole correzioni di bug",
+				"es": "pequeñas correcciones de errores",
+				"pl": "małe poprawki błędów",
+				"zh-cn": "小错误修正"
+			},
 			"1.2.0": {
 				"en": "small bugfixes",
 				"de": "kleine Fehlerbehebungen",
@@ -40,7 +53,7 @@
 				"pl": "małe poprawki błędów",
 				"zh-cn": "小错误修正"
 			},
-			"1.0.0": {
+			"1.0.1": {
 				"en": "initial release",
 				"de": "Erstveröffentlichung",
 				"ru": "Первый выпуск",
@@ -55,6 +68,7 @@
 		},
 		"titleLang": {
 			"en": "TRONITY",
+			"uk": "TRONITY",
 			"de": "TRONITY",
 			"ru": "ТРОНИТИ",
 			"pt": "TRONIDADE",
@@ -67,6 +81,7 @@
 		},
 		"desc": {
 			"en": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
+			"uk": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
 			"de": "Ermöglicht es Ihnen, Fahrzeugdaten von Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall und Volkswagen abzurufen",
 			"ru": "Позволяет получать данные об автомобиле от Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall и Volkswagen.",
 			"pt": "Permite obter dados de veículos da Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall e Volkswagen",
@@ -119,16 +134,18 @@
 		"compact": true,
 		"connectionType": "cloud",
 		"dataSource": "poll",
-		"materialize": true,
 		"messagebox": true,
+		"adminUI": {
+			"config": "json"
+		},
 		"dependencies": [
 			{
-				"js-controller": ">=2.0.0"
+				"js-controller": ">=5.0.19"
 			}
 		],
 		"globalDependencies": [
 			{
-				"admin": ">=4.0.9"
+				"admin": ">=6.0.0"
 			}
 		]
 	},

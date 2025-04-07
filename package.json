@@ -1,6 +1,6 @@
 {
   "name": "iobroker.tronity",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
   "author": {
     "name": "Sebastian",
@@ -42,7 +42,6 @@
     "memory-cache": "^0.2.0"
   },
   "devDependencies": {
-    "@alcalzone/release-script": "^3.8.0",
     "@iobroker/adapter-dev": "^1.4.0",
     "@iobroker/eslint-config": "^2.0.1",
     "@iobroker/testing": "^5.0.4",
@@ -89,8 +88,7 @@
     "check": "tsc --noEmit",
     "lint": "eslint -c eslint.config.mjs .",
     "lint:fix": "eslint -c eslint.config.mjs . --fix",
-    "translate": "translate-adapter",
-    "release": "release-script"
+    "translate": "translate-adapter"
   },
   "bugs": {
     "url": "https://github.com/tronity/ioBroker.tronity/issues"
