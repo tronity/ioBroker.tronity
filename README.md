@@ -35,6 +35,9 @@ the adapter.
 <!--
 	### **WORK IN PROGRESS**
 -->
+### 1.2.0 (2025-04-07)
+
+-   small bugfixes
 
 ### 1.1.1 (2022-05-20)
 
