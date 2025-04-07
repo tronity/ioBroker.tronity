@@ -1,26 +1,10 @@
+"use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -29,15 +13,23 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target, mod));
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var utils = __toESM(require("@iobroker/adapter-core"));
-var import_got = __toESM(require("got"));
+var import_axios = __toESM(require("axios"));
 var cache = __toESM(require("memory-cache"));
 class Tronity extends utils.Adapter {
   constructor(options = {}) {
-    super(__spreadProps(__spreadValues({}, options), {
+    super({
+      ...options,
       name: "tronity"
-    }));
+    });
     this.timeout = null;
     this.URL = "https://api.tronity.tech";
     this.on("ready", this.onReady.bind(this));
@@ -62,6 +54,8 @@ class Tronity extends utils.Adapter {
       await this.initSetObject("chargerPower", "number", "level");
       await this.initSetObject("latitude", "number", "value.gps.longitude");
       await this.initSetObject("longitude", "number", "value.gps.latitude");
+      await this.initSetObject("outTemp", "number", "level");
+      await this.initSetObject("elevation", "number", "level");
       await this.initSetObject("timestamp", "number", "value.time");
       await this.initSetObject("lastUpdate", "number", "value.time");
       await this.setStateAsync("info.connection", true, true);
@@ -87,13 +81,11 @@ class Tronity extends utils.Adapter {
       if (cache.get(this.config.client_id)) {
         return cache.get(this.config.client_id);
       }
-      const token = await import_got.default.post(`${this.URL}/authentication`, {
-        json: {
-          client_id: this.config.client_id,
-          client_secret: this.config.client_secret,
-          grant_type: "app"
-        }
-      }).json();
+      const token = await import_axios.default.post(`${this.URL}/authentication`, {
+        client_id: this.config.client_id,
+        client_secret: this.config.client_secret,
+        grant_type: "app"
+      }).then((e) => e.data);
       cache.put(this.config.client_id, token.access_token, token.expires_in - 120);
       return token.access_token;
     } catch (e) {
@@ -105,33 +97,58 @@ class Tronity extends utils.Adapter {
     try {
       if (this.config.vehicle_id) {
         const token = await this.getToken();
-        const status = await import_got.default.get(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`, {
+        const status = await import_axios.default.get(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
-        }).json();
-        if (status.odometer > -1)
+        }).then((e) => e.data);
+        if (status.odometer > -1) {
           this.setState("odometer", status.odometer, true);
-        if (status.range > -1)
+        }
+        if (status.range > -1) {
           this.setState("range", status.range, true);
-        if (status.level > -1)
+        }
+        if (status.level > -1) {
           this.setState("level", status.level, true);
-        if (status.charging && status.charging.length > 0)
+        }
+        if (status.charging && status.charging.length > 0) {
           this.setState("charging", status.charging, true);
-        if (status.chargeRemainingTime > 0)
-          this.setState("chargeRemainingTime", status.chargeRemainingTime, true);
-        if (status.plugged !== null)
+          if (status.chargeRemainingTime > 0 && status.charging !== "Disconnected") {
+            this.setState("chargeRemainingTime", status.chargeRemainingTime, true);
+          }
+        }
+        if (status.plugged !== null) {
           this.setState("plugged", status.plugged, true);
-        if (status.chargerPower > 0)
+        }
+        if (status.chargerPower > 0) {
           this.setState("chargerPower", status.chargerPower, true);
-        if (status.latitude !== null)
+        }
+        if (status.latitude !== null) {
           this.setState("latitude", status.latitude, true);
-        if (status.longitude !== null)
+        }
+        if (status.longitude !== null) {
           this.setState("longitude", status.longitude, true);
-        if (status.timestamp)
-          this.setState("timestamp", typeof status.timestamp === "number" ? status.timestamp : new Date(status.timestamp).getTime(), true);
-        if (status.lastUpdate)
-          this.setState("lastUpdate", typeof status.lastUpdate === "number" ? status.lastUpdate : new Date(status.lastUpdate).getTime(), true);
+        }
+        if (status.outTemp > -100) {
+          this.setState("outTemp", status.outTemp, true);
+        }
+        if (status.elevation > -100) {
+          this.setState("elevation", status.elevation, true);
+        }
+        if (status.timestamp) {
+          this.setState(
+            "timestamp",
+            typeof status.timestamp === "number" ? status.timestamp : new Date(status.timestamp).getTime(),
+            true
+          );
+        }
+        if (status.lastUpdate) {
+          this.setState(
+            "lastUpdate",
+            typeof status.lastUpdate === "number" ? status.lastUpdate : new Date(status.lastUpdate).getTime(),
+            true
+          );
+        }
       }
     } catch (e) {
       this.log.error(e);
@@ -144,18 +161,18 @@ class Tronity extends utils.Adapter {
       const client_secret = msg.message.client_secret;
       this.log.info("Try to validate login data and get vehicles");
       try {
-        const token = await import_got.default.post(`${this.URL}/authentication`, {
+        const token = await import_axios.default.post(`${this.URL}/authentication`, {
           json: {
             client_id,
             client_secret,
             grant_type: "app"
           }
-        }).json();
-        const vehicles = await import_got.default.get(`${this.URL}/tronity/vehicles?limit=1000`, {
+        }).then((e) => e.data);
+        const vehicles = await import_axios.default.get(`${this.URL}/tronity/vehicles?limit=1000`, {
           headers: {
             Authorization: `Bearer ${token.access_token}`
           }
-        }).json();
+        }).then((e) => e.data);
         this.sendTo(msg.from, msg.command, { success: true, vehicles: vehicles.data }, msg.callback);
       } catch (e) {
         this.log.error(e);
@@ -165,16 +182,18 @@ class Tronity extends utils.Adapter {
   }
   onUnload(callback) {
     try {
-      if (this.timeout)
+      if (this.timeout) {
         clearTimeout(this.timeout);
+      }
       callback();
-    } catch (e) {
+    } catch {
       callback();
     }
   }
   async onStateChange(id, state) {
-    if (!state)
+    if (!state) {
       return;
+    }
     this.log.debug(`State Change: ${id} to ${state.val} ack ${state.ack}`);
     if (this.config.vehicle_id && state.ack === false) {
       const currentId = id.substring(this.namespace.length + 1);
@@ -183,11 +202,14 @@ class Tronity extends utils.Adapter {
           if (state.val) {
             try {
               const token = await this.getToken();
-              await import_got.default.post(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`, {
-                headers: {
-                  Authorization: `Bearer ${token}`
+              await import_axios.default.post(
+                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
                 }
-              });
+              );
               this.log.info("Try to start charging!");
             } catch (e) {
               this.log.error(e);
@@ -195,11 +217,14 @@ class Tronity extends utils.Adapter {
           } else {
             try {
               const token = await this.getToken();
-              await import_got.default.post(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`, {
-                headers: {
-                  Authorization: `Bearer ${token}`
+              await import_axios.default.post(
+                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
                 }
-              });
+              );
               this.log.info("Try to stop charging!");
             } catch (e) {
               this.log.error(e);

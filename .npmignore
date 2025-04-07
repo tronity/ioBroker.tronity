@@ -1,4 +1,6 @@
 tsconfig.build.json
 tsconfig.json
+eslint.config.mjs
+prettier.config.mjs
 src/
 test/
