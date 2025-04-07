@@ -2,7 +2,7 @@
 	"common": {
 		"name": "tronity",
 		"version": "1.2.0",
-		"tier": "last",
+		"tier": 3,
 		"news": {
 			"1.2.0": {
 				"en": "small bugfixes",
@@ -104,7 +104,11 @@
 			"Volkswagen",
 			"TRONITY"
 		],
-		"licenseInformation": "MIT",
+		"licenseInformation": {
+			"type": "MIT",
+			"url": "https://opensource.org/licenses/MIT",
+			"text": "Permission is hereby granted, free of charge, to any person obtaining a copy of this software..."
+		},
 		"platform": "Javascript/Node.js",
 		"icon": "tronity.png",
 		"enabled": true,
