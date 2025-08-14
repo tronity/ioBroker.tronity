@@ -1,0 +1,36 @@
+{
+	"i18n": true,
+	"type": "panel",
+	"items": {
+		"client_id":  {
+			"type": "text",
+			"label": "Client ID",
+      "newLine": true,
+			"xs": 12,
+			"sm": 12,
+			"md": 6,
+			"lg": 4,
+			"xl": 4
+		},
+		"client_secret":  {
+			"type": "password",
+			"label": "Client Secret",
+      "newLine": true,
+			"xs": 12,
+			"sm": 12,
+			"md": 6,
+			"lg": 4,
+			"xl": 4
+		},
+		"vehicle_id": {
+			"type": "text",
+			"label": "Vehicle ID",
+			"newLine": true,
+			"xs": 12,
+			"sm": 12,
+			"md": 6,
+			"lg": 4,
+			"xl": 4
+		},
+	}
+}
