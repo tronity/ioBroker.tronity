@@ -94,7 +94,7 @@
     "url": "https://github.com/tronity/ioBroker.tronity/issues"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "readmeFilename": "README.md"
 }
