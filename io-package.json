@@ -1,187 +1,187 @@
 {
-	"common": {
-		"name": "tronity",
-		"version": "1.2.1",
-		"tier": 3,
-		"news": {
-			"1.2.1": {
-				"en": "small bugfixes",
-				"uk": "small bugfixes",
-				"de": "kleine Fehlerbehebungen",
-				"ru": "небольшие исправления",
-				"pt": "pequenas correções de bugs",
-				"nl": "kleine bugfixes",
-				"fr": "petites corrections de bugs",
-				"it": "piccole correzioni di bug",
-				"es": "pequeñas correcciones de errores",
-				"pl": "małe poprawki błędów",
-				"zh-cn": "小错误修正"
-			},
-			"1.2.0": {
-				"en": "small bugfixes",
-				"de": "kleine Fehlerbehebungen",
-				"ru": "небольшие исправления",
-				"pt": "pequenas correções de bugs",
-				"nl": "kleine bugfixes",
-				"fr": "petites corrections de bugs",
-				"it": "piccole correzioni di bug",
-				"es": "pequeñas correcciones de errores",
-				"pl": "małe poprawki błędów",
-				"zh-cn": "小错误修正"
-			},
-			"1.1.1": {
-				"en": "small bugfixes",
-				"de": "kleine Fehlerbehebungen",
-				"ru": "небольшие исправления",
-				"pt": "pequenas correções de bugs",
-				"nl": "kleine bugfixes",
-				"fr": "petites corrections de bugs",
-				"it": "piccole correzioni di bug",
-				"es": "pequeñas correcciones de errores",
-				"pl": "małe poprawki błędów",
-				"zh-cn": "小错误修正"
-			},
-			"1.1.0": {
-				"en": "small bugfixes",
-				"de": "kleine Fehlerbehebungen",
-				"ru": "небольшие исправления",
-				"pt": "pequenas correções de bugs",
-				"nl": "kleine bugfixes",
-				"fr": "petites corrections de bugs",
-				"it": "piccole correzioni di bug",
-				"es": "pequeñas correcciones de errores",
-				"pl": "małe poprawki błędów",
-				"zh-cn": "小错误修正"
-			},
-			"1.0.1": {
-				"en": "initial release",
-				"de": "Erstveröffentlichung",
-				"ru": "Первый выпуск",
-				"pt": "lançamento inicial",
-				"nl": "Eerste uitgave",
-				"fr": "Première version",
-				"it": "Versione iniziale",
-				"es": "Versión inicial",
-				"pl": "Pierwsze wydanie",
-				"zh-cn": "初始发行"
-			}
-		},
-		"titleLang": {
-			"en": "TRONITY",
-			"uk": "TRONITY",
-			"de": "TRONITY",
-			"ru": "ТРОНИТИ",
-			"pt": "TRONIDADE",
-			"nl": "TRONITY",
-			"fr": "TRONITÉ",
-			"it": "TRONITÀ",
-			"es": "TRONIDAD",
-			"pl": "TRONIA",
-			"zh-cn": "创力"
-		},
-		"desc": {
-			"en": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
-			"uk": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
-			"de": "Ermöglicht es Ihnen, Fahrzeugdaten von Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall und Volkswagen abzurufen",
-			"ru": "Позволяет получать данные об автомобиле от Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall и Volkswagen.",
-			"pt": "Permite obter dados de veículos da Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall e Volkswagen",
-			"nl": "Hiermee kunt u voertuiggegevens opvragen van Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall en Volkswagen",
-			"fr": "Vous permet d'obtenir des données sur les véhicules d'Audi, BMW, Citroën, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall et Volkswagen",
-			"it": "Consente di ottenere i dati del veicolo da Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall e Volkswagen",
-			"es": "Le permite obtener datos de vehículos de Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall y Volkswagen",
-			"pl": "Umożliwia uzyskanie danych pojazdu z Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall i Volkswagen",
-			"zh-cn": "使您能够从奥迪、宝马、雪铁龙、Cupra、DS、菲亚特、福特、现代、捷豹、起亚、MINI、梅赛德斯、欧宝、标致、保时捷、雷诺、西雅特、斯柯达、Smart、特斯拉、沃克斯豪尔和大众汽车获取车辆数据"
-		},
-		"authors": [
-			"TRONITY <support@tronity.io>"
-		],
-		"keywords": [
-			"Audi",
-			"BMW",
-			"Citroen",
-			"Cupra",
-			"DS",
-			"Fiat",
-			"Ford",
-			"Jaguar",
-			"Kia",
-			"MINI",
-			"Mercedes",
-			"Opel",
-			"Peugeot",
-			"Porsche",
-			"Renault",
-			"Seat",
-			"Skoda",
-			"Smart",
-			"Tesla",
-			"Vauxhall",
-			"Volkswagen",
-			"TRONITY"
-		],
-		"licenseInformation": {
-			"type": "free",
-			"license": "MIT"
-		},
-		"platform": "Javascript/Node.js",
-		"icon": "tronity.png",
-		"enabled": true,
-		"extIcon": "https://raw.githubusercontent.com/tronity/ioBroker.tronity/main/admin/tronity.png",
-		"readme": "https://github.com/tronity/ioBroker.tronity/blob/main/README.md",
-		"loglevel": "info",
-		"mode": "daemon",
-		"type": "vehicle",
-		"compact": true,
-		"connectionType": "cloud",
-		"dataSource": "poll",
-		"messagebox": true,
-		"adminUI": {
-			"config": "json"
-		},
-		"dependencies": [
-			{
-				"js-controller": ">=5.0.19"
-			}
-		],
-		"globalDependencies": [
-			{
-				"admin": ">=6.17.14"
-			}
-		]
-	},
-	"encryptedNative": [
-		"client_secret"
-	],
-	"protectedNative": [
-		"client_secret"
-	],
-	"native": {
-		"client_id": "",
-		"client_secret": "",
-		"vehicle_id": ""
-	},
-	"objects": [],
-	"instanceObjects": [
-		{
-			"_id": "info",
-			"type": "channel",
-			"common": {
-				"name": "Information"
-			},
-			"native": {}
-		},
-		{
-			"_id": "info.connection",
-			"type": "state",
-			"common": {
-				"role": "indicator.connected",
-				"name": "Device or service connected",
-				"type": "boolean",
-				"read": true,
-				"write": false,
-				"def": false
-			},
-			"native": {}
-		}
-	]
+  "common": {
+    "name": "tronity",
+    "version": "1.2.1",
+    "tier": 3,
+    "news": {
+      "1.2.1": {
+        "en": "small bugfixes",
+        "uk": "small bugfixes",
+        "de": "kleine Fehlerbehebungen",
+        "ru": "небольшие исправления",
+        "pt": "pequenas correções de bugs",
+        "nl": "kleine bugfixes",
+        "fr": "petites corrections de bugs",
+        "it": "piccole correzioni di bug",
+        "es": "pequeñas correcciones de errores",
+        "pl": "małe poprawki błędów",
+        "zh-cn": "小错误修正"
+      },
+      "1.2.0": {
+        "en": "small bugfixes",
+        "de": "kleine Fehlerbehebungen",
+        "ru": "небольшие исправления",
+        "pt": "pequenas correções de bugs",
+        "nl": "kleine bugfixes",
+        "fr": "petites corrections de bugs",
+        "it": "piccole correzioni di bug",
+        "es": "pequeñas correcciones de errores",
+        "pl": "małe poprawki błędów",
+        "zh-cn": "小错误修正"
+      },
+      "1.1.1": {
+        "en": "small bugfixes",
+        "de": "kleine Fehlerbehebungen",
+        "ru": "небольшие исправления",
+        "pt": "pequenas correções de bugs",
+        "nl": "kleine bugfixes",
+        "fr": "petites corrections de bugs",
+        "it": "piccole correzioni di bug",
+        "es": "pequeñas correcciones de errores",
+        "pl": "małe poprawki błędów",
+        "zh-cn": "小错误修正"
+      },
+      "1.1.0": {
+        "en": "small bugfixes",
+        "de": "kleine Fehlerbehebungen",
+        "ru": "небольшие исправления",
+        "pt": "pequenas correções de bugs",
+        "nl": "kleine bugfixes",
+        "fr": "petites corrections de bugs",
+        "it": "piccole correzioni di bug",
+        "es": "pequeñas correcciones de errores",
+        "pl": "małe poprawki błędów",
+        "zh-cn": "小错误修正"
+      },
+      "1.0.1": {
+        "en": "initial release",
+        "de": "Erstveröffentlichung",
+        "ru": "Первый выпуск",
+        "pt": "lançamento inicial",
+        "nl": "Eerste uitgave",
+        "fr": "Première version",
+        "it": "Versione iniziale",
+        "es": "Versión inicial",
+        "pl": "Pierwsze wydanie",
+        "zh-cn": "初始发行"
+      }
+    },
+    "titleLang": {
+      "en": "TRONITY",
+      "uk": "TRONITY",
+      "de": "TRONITY",
+      "ru": "ТРОНИТИ",
+      "pt": "TRONIDADE",
+      "nl": "TRONITY",
+      "fr": "TRONITÉ",
+      "it": "TRONITÀ",
+      "es": "TRONIDAD",
+      "pl": "TRONIA",
+      "zh-cn": "创力"
+    },
+    "desc": {
+      "en": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
+      "uk": "Enables you to get vehicle data from Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall and Volkswagen",
+      "de": "Ermöglicht es Ihnen, Fahrzeugdaten von Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall und Volkswagen abzurufen",
+      "ru": "Позволяет получать данные об автомобиле от Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall и Volkswagen.",
+      "pt": "Permite obter dados de veículos da Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall e Volkswagen",
+      "nl": "Hiermee kunt u voertuiggegevens opvragen van Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall en Volkswagen",
+      "fr": "Vous permet d'obtenir des données sur les véhicules d'Audi, BMW, Citroën, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall et Volkswagen",
+      "it": "Consente di ottenere i dati del veicolo da Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall e Volkswagen",
+      "es": "Le permite obtener datos de vehículos de Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall y Volkswagen",
+      "pl": "Umożliwia uzyskanie danych pojazdu z Audi, BMW, Citroen, Cupra, DS, Fiat, Ford, Hyundai, Jaguar, Kia, MINI, Mercedes, Opel, Peugeot, Porsche, Renault, Seat, Skoda, Smart, Tesla, Vauxhall i Volkswagen",
+      "zh-cn": "使您能够从奥迪、宝马、雪铁龙、Cupra、DS、菲亚特、福特、现代、捷豹、起亚、MINI、梅赛德斯、欧宝、标致、保时捷、雷诺、西雅特、斯柯达、Smart、特斯拉、沃克斯豪尔和大众汽车获取车辆数据"
+    },
+    "authors": [
+      "TRONITY <support@tronity.io>"
+    ],
+    "keywords": [
+      "Audi",
+      "BMW",
+      "Citroen",
+      "Cupra",
+      "DS",
+      "Fiat",
+      "Ford",
+      "Jaguar",
+      "Kia",
+      "MINI",
+      "Mercedes",
+      "Opel",
+      "Peugeot",
+      "Porsche",
+      "Renault",
+      "Seat",
+      "Skoda",
+      "Smart",
+      "Tesla",
+      "Vauxhall",
+      "Volkswagen",
+      "TRONITY"
+    ],
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
+    "platform": "Javascript/Node.js",
+    "icon": "tronity.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/tronity/ioBroker.tronity/main/admin/tronity.png",
+    "readme": "https://github.com/tronity/ioBroker.tronity/blob/main/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "vehicle",
+    "compact": true,
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "messagebox": true,
+    "adminUI": {
+      "config": "json"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=6.0.11"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=6.17.14"
+      }
+    ]
+  },
+  "encryptedNative": [
+    "client_secret"
+  ],
+  "protectedNative": [
+    "client_secret"
+  ],
+  "native": {
+    "client_id": "",
+    "client_secret": "",
+    "vehicle_id": ""
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
 }
