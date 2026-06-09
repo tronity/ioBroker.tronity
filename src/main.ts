@@ -32,15 +32,15 @@ class Tronity extends utils.Adapter {
             await this.initSetObject('chargeRemainingTime', 'number', 'value.time');
             await this.initSetObject('plugged', 'boolean', 'switch');
             await this.initSetObject('chargerPower', 'number', 'level');
-            await this.initSetObject('latitude', 'number', 'value.gps.longitude');
-            await this.initSetObject('longitude', 'number', 'value.gps.latitude');
+            await this.initSetObject('latitude', 'number', 'value.gps.latitude');
+            await this.initSetObject('longitude', 'number', 'value.gps.longitude');
             await this.initSetObject('outTemp', 'number', 'level');
             await this.initSetObject('elevation', 'number', 'level');
             await this.initSetObject('timestamp', 'number', 'value.time');
             await this.initSetObject('lastUpdate', 'number', 'value.time');
 
             await this.setStateAsync('info.connection', true, true);
-            await this.setStateAsync('command.Charging', false);
+            await this.setStateAsync('command.Charging', false, true);
             await this.updateVehicleData();
         }
     }
@@ -74,7 +74,7 @@ class Tronity extends utils.Adapter {
                 access_token: string;
                 expires_in: number;
             };
-            cache.put(this.config.client_id, token.access_token, token.expires_in - 120);
+            cache.put(this.config.client_id, token.access_token, (token.expires_in - 120) * 1000);
             return token.access_token;
         } catch (e: any) {
             this.log.error(e);
@@ -86,8 +86,9 @@ class Tronity extends utils.Adapter {
         try {
             if (this.config.vehicle_id) {
                 const token = await this.getToken();
+                const recordUrl = `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`;
                 const status = (await axios
-                    .get(`${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`, {
+                    .get(recordUrl, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
@@ -158,25 +159,27 @@ class Tronity extends utils.Adapter {
                 }
             }
         } catch (e: any) {
-            this.log.error(e);
+            const msg = e?.response
+                ? `HTTP ${e.response.status} on ${e.config?.url ?? 'unknown URL'}: ${JSON.stringify(e.response.data)}`
+                : e?.message ?? String(e);
+            this.log.error(`updateVehicleData: ${msg}`);
         }
         this.timeout = setTimeout(() => this.updateVehicleData(), 60 * 1000);
     }
 
     private async onMessage(msg: any): Promise<void> {
         if (msg.command === 'validate') {
-            const client_id = msg.message.client_id;
-            const client_secret = msg.message.client_secret;
+            // credentials come from the current form values (selectSendTo sends all config fields)
+            const client_id     = msg.message?.client_id     || this.config.client_id;
+            const client_secret = msg.message?.client_secret || this.config.client_secret;
 
             this.log.info('Try to validate login data and get vehicles');
             try {
                 const token = (await axios
                     .post(`${this.URL}/authentication`, {
-                        json: {
-                            client_id,
-                            client_secret,
-                            grant_type: 'app',
-                        },
+                        client_id,
+                        client_secret,
+                        grant_type: 'app',
                     })
                     .then(e => e.data)) as {
                     access_token: string;
@@ -189,12 +192,17 @@ class Tronity extends utils.Adapter {
                         },
                     })
                     .then(e => e.data)) as {
-                    data: [];
+                    data: Array<{ id: string; displayName: string; manufacture: string }>;
                 };
-                this.sendTo(msg.from, msg.command, { success: true, vehicles: vehicles.data }, msg.callback);
+                // Return [{label, value}] array as required by the selectSendTo component
+                const options = vehicles.data.map(v => ({
+                    label: `${v.manufacture} ${v.displayName}`,
+                    value: v.id,
+                }));
+                this.sendTo(msg.from, msg.command, options, msg.callback);
             } catch (e: any) {
                 this.log.error(e);
-                this.sendTo(msg.from, msg.command, { success: false }, msg.callback);
+                this.sendTo(msg.from, msg.command, [], msg.callback);
             }
         }
     }
@@ -225,6 +233,7 @@ class Tronity extends utils.Adapter {
                             const token = await this.getToken();
                             await axios.post(
                                 `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`,
+                                {},
                                 {
                                     headers: {
                                         Authorization: `Bearer ${token}`,
@@ -240,6 +249,7 @@ class Tronity extends utils.Adapter {
                             const token = await this.getToken();
                             await axios.post(
                                 `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`,
+                                {},
                                 {
                                     headers: {
                                         Authorization: `Bearer ${token}`,
