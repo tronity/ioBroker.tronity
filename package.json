@@ -38,7 +38,7 @@
     "url": "https://github.com/tronity/ioBroker.tronity"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.2.3",
+    "@iobroker/adapter-core": "^3.3.2",
     "axios": "^1.9.0",
     "memory-cache": "^0.2.0"
   },
