@@ -1,6 +1,6 @@
 {
-  "Adapter settings for Tronity": "Adapterinstellingen voor TRONITY",
-  "Description": "Om gegevens op te halen, moeten client_id en client_secret worden ingevoerd vanaf het TRONITY-platform. Controleer vervolgens de waarden en selecteer het voertuig.",
-  "Check Login Data": "Inloggegevens controleren",
-  "Select your Car": "Selecteer uw auto"
+    "Adapter settings for Tronity": "Adapterinstellingen voor TRONITY",
+    "Description": "Om gegevens op te halen, moeten client_id en client_secret worden ingevoerd vanaf het TRONITY-platform. Controleer vervolgens de waarden en selecteer het voertuig. https://app.tronity.tech/",
+    "Check Login Data": "Inloggegevens controleren",
+    "Select your Car": "Selecteer uw auto"
 }

@@ -1,6 +1,6 @@
 {
-  "Adapter settings for Tronity": "Ustawienia adaptera dla TRONITY",
-  "Description": "Aby pobrac dane, client_id i client_secret musza byc wprowadzone z Platformy TRONITY. Nastepnie sprawdz wartosci i wybierz pojazd.",
-  "Check Login Data": "Sprawdz dane logowania",
-  "Select your Car": "Wybierz swoj samochod"
+    "Adapter settings for Tronity": "Ustawienia adaptera dla TRONITY",
+    "Description": "Aby pobrac dane, client_id i client_secret musza byc wprowadzone z Platformy TRONITY. Nastepnie sprawdz wartosci i wybierz pojazd. https://app.tronity.tech/",
+    "Check Login Data": "Sprawdz dane logowania",
+    "Select your Car": "Wybierz swoj samochod"
 }
