@@ -161,7 +161,7 @@ class Tronity extends utils.Adapter {
         } catch (e: any) {
             const msg = e?.response
                 ? `HTTP ${e.response.status} on ${e.config?.url ?? 'unknown URL'}: ${JSON.stringify(e.response.data)}`
-                : e?.message ?? String(e);
+                : (e?.message ?? String(e));
             this.log.error(`updateVehicleData: ${msg}`);
         }
         this.timeout = setTimeout(() => this.updateVehicleData(), 60 * 1000);
@@ -170,7 +170,7 @@ class Tronity extends utils.Adapter {
     private async onMessage(msg: any): Promise<void> {
         if (msg.command === 'validate') {
             // credentials come from the current form values (selectSendTo sends all config fields)
-            const client_id     = msg.message?.client_id     || this.config.client_id;
+            const client_id = msg.message?.client_id || this.config.client_id;
             const client_secret = msg.message?.client_secret || this.config.client_secret;
 
             this.log.info('Try to validate login data and get vehicles');
