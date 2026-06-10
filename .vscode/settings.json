@@ -5,12 +5,26 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "[typescript]": {
         "editor.codeActionsOnSave": {
+<<<<<<< HEAD
             "source.organizeImports": "explicit"
+=======
+<<<<<<< Updated upstream
+            "source.organizeImports": true
+=======
+            "source.organizeImports": "explicit"
+>>>>>>> Stashed changes
+>>>>>>> ee7d212 (chore: fix security issues updating dependencies)
         }
     },
     "json.schemas": [
         {
+<<<<<<< HEAD
             "fileMatch": ["io-package.json"],
+=======
+            "fileMatch": [
+                "io-package.json"
+            ],
+>>>>>>> 105f76b (chore: fix security issues updating dependencies)
             "url": "https://raw.githubusercontent.com/ioBroker/ioBroker.js-controller/master/schemas/io-package.json"
         },
         {
