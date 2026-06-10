@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -6,248 +6,268 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
+    if ((from && typeof from === 'object') || typeof from === 'function') {
+        for (let key of __getOwnPropNames(from))
+            if (!__hasOwnProp.call(to, key) && key !== except)
+                __defProp(to, key, {
+                    get: () => from[key],
+                    enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable,
+                });
+    }
+    return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var utils = __toESM(require("@iobroker/adapter-core"));
-var import_axios = __toESM(require("axios"));
-var cache = __toESM(require("memory-cache"));
+var __toESM = (mod, isNodeMode, target) => (
+    (target = mod != null ? __create(__getProtoOf(mod)) : {}),
+    __copyProps(
+        // If the importer is in node compatibility mode or this is not an ESM
+        // file that has been converted to a CommonJS file using a Babel-
+        // compatible transform (i.e. "__esModule" has not been set), then set
+        // "default" to the CommonJS "module.exports" for node compatibility.
+        isNodeMode || !mod || !mod.__esModule ? __defProp(target, 'default', { value: mod, enumerable: true }) : target,
+        mod,
+    )
+);
+var utils = __toESM(require('@iobroker/adapter-core'));
+var import_axios = __toESM(require('axios'));
+var cache = __toESM(require('memory-cache'));
 class Tronity extends utils.Adapter {
-  timeout = null;
-  URL = "https://api.tronity.tech";
-  constructor(options = {}) {
-    super({
-      ...options,
-      name: "tronity"
-    });
-    this.on("ready", this.onReady.bind(this));
-    this.on("stateChange", this.onStateChange.bind(this));
-    this.on("message", this.onMessage.bind(this));
-    this.on("unload", this.onUnload.bind(this));
-  }
-  async onReady() {
-    this.log.debug("Starting");
-    this.subscribeStates("command.*");
-    await this.setStateAsync("info.connection", false, true);
-    if (this.config.client_id && this.config.client_secret && this.config.vehicle_id) {
-      await this.setStateAsync("info.connection", true, true);
-      await this.initSetObject("command.Charging", "boolean", "switch");
-      await this.initSetObject("odometer", "number", "level");
-      await this.initSetObject("range", "number", "level");
-      await this.initSetObject("level", "number", "level");
-      await this.initSetObject("charging", "string", "text");
-      await this.initSetObject("power", "number", "level");
-      await this.initSetObject("chargeRemainingTime", "number", "value.time");
-      await this.initSetObject("plugged", "boolean", "switch");
-      await this.initSetObject("chargerPower", "number", "level");
-      await this.initSetObject("latitude", "number", "value.gps.latitude");
-      await this.initSetObject("longitude", "number", "value.gps.longitude");
-      await this.initSetObject("outTemp", "number", "level");
-      await this.initSetObject("elevation", "number", "level");
-      await this.initSetObject("timestamp", "number", "value.time");
-      await this.initSetObject("lastUpdate", "number", "value.time");
-      await this.setStateAsync("info.connection", true, true);
-      await this.setStateAsync("command.Charging", false, true);
-      await this.updateVehicleData();
+    timeout = null;
+    URL = 'https://api.tronity.tech';
+    constructor(options = {}) {
+        super({
+            ...options,
+            name: 'tronity',
+        });
+        this.on('ready', this.onReady.bind(this));
+        this.on('stateChange', this.onStateChange.bind(this));
+        this.on('message', this.onMessage.bind(this));
+        this.on('unload', this.onUnload.bind(this));
     }
-  }
-  async initSetObject(name, type, role) {
-    return this.setObjectNotExistsAsync(name, {
-      type: "state",
-      common: {
-        name,
-        type,
-        role,
-        write: true,
-        read: true
-      },
-      native: {}
-    });
-  }
-  async getToken() {
-    try {
-      if (cache.get(this.config.client_id)) {
-        return cache.get(this.config.client_id);
-      }
-      const token = await import_axios.default.post(`${this.URL}/authentication`, {
-        client_id: this.config.client_id,
-        client_secret: this.config.client_secret,
-        grant_type: "app"
-      }).then((e) => e.data);
-      cache.put(this.config.client_id, token.access_token, (token.expires_in - 120) * 1e3);
-      return token.access_token;
-    } catch (e) {
-      this.log.error(e);
-      throw Error(e);
+    async onReady() {
+        this.log.debug('Starting');
+        this.subscribeStates('command.*');
+        await this.setStateAsync('info.connection', false, true);
+        if (this.config.client_id && this.config.client_secret && this.config.vehicle_id) {
+            await this.setStateAsync('info.connection', true, true);
+            await this.initSetObject('command.Charging', 'boolean', 'switch');
+            await this.initSetObject('odometer', 'number', 'level');
+            await this.initSetObject('range', 'number', 'level');
+            await this.initSetObject('level', 'number', 'level');
+            await this.initSetObject('charging', 'string', 'text');
+            await this.initSetObject('power', 'number', 'level');
+            await this.initSetObject('chargeRemainingTime', 'number', 'value.time');
+            await this.initSetObject('plugged', 'boolean', 'switch');
+            await this.initSetObject('chargerPower', 'number', 'level');
+            await this.initSetObject('latitude', 'number', 'value.gps.latitude');
+            await this.initSetObject('longitude', 'number', 'value.gps.longitude');
+            await this.initSetObject('outTemp', 'number', 'level');
+            await this.initSetObject('elevation', 'number', 'level');
+            await this.initSetObject('timestamp', 'number', 'value.time');
+            await this.initSetObject('lastUpdate', 'number', 'value.time');
+            await this.setStateAsync('info.connection', true, true);
+            await this.setStateAsync('command.Charging', false, true);
+            await this.updateVehicleData();
+        }
     }
-  }
-  async updateVehicleData() {
-    var _a, _b, _c;
-    try {
-      if (this.config.vehicle_id) {
-        const token = await this.getToken();
-        const recordUrl = `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`;
-        const status = await import_axios.default.get(recordUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }).then((e) => e.data);
-        if (status.odometer > -1) {
-          await this.setState("odometer", status.odometer, true);
-        }
-        if (status.range > -1) {
-          await this.setState("range", status.range, true);
-        }
-        if (status.level > -1) {
-          await this.setState("level", status.level, true);
-        }
-        if (status.charging && status.charging.length > 0) {
-          await this.setState("charging", status.charging, true);
-          if (status.chargeRemainingTime > 0 && status.charging !== "Disconnected") {
-            await this.setState("chargeRemainingTime", status.chargeRemainingTime, true);
-          }
-        }
-        if (status.plugged !== null) {
-          await this.setState("plugged", status.plugged, true);
-        }
-        if (status.chargerPower > 0) {
-          await this.setState("chargerPower", status.chargerPower, true);
-        }
-        if (status.latitude !== null) {
-          await this.setState("latitude", status.latitude, true);
-        }
-        if (status.longitude !== null) {
-          await this.setState("longitude", status.longitude, true);
-        }
-        if (status.outTemp > -100) {
-          await this.setState("outTemp", status.outTemp, true);
-        }
-        if (status.elevation > -100) {
-          await this.setState("elevation", status.elevation, true);
-        }
-        if (status.timestamp) {
-          await this.setState(
-            "timestamp",
-            typeof status.timestamp === "number" ? status.timestamp : new Date(status.timestamp).getTime(),
-            true
-          );
-        }
-        if (status.lastUpdate) {
-          await this.setState(
-            "lastUpdate",
-            typeof status.lastUpdate === "number" ? status.lastUpdate : new Date(status.lastUpdate).getTime(),
-            true
-          );
-        }
-      }
-    } catch (e) {
-      const msg = (e == null ? void 0 : e.response) ? `HTTP ${e.response.status} on ${(_b = (_a = e.config) == null ? void 0 : _a.url) != null ? _b : "unknown URL"}: ${JSON.stringify(e.response.data)}` : (_c = e == null ? void 0 : e.message) != null ? _c : String(e);
-      this.log.error(`updateVehicleData: ${msg}`);
+    async initSetObject(name, type, role) {
+        return this.setObjectNotExistsAsync(name, {
+            type: 'state',
+            common: {
+                name,
+                type,
+                role,
+                write: true,
+                read: true,
+            },
+            native: {},
+        });
     }
-    this.timeout = this.setTimeout(() => {
-      void this.updateVehicleData();
-    }, 60 * 1e3);
-  }
-  async onMessage(msg) {
-    var _a, _b;
-    if (msg.command === "validate") {
-      const client_id = ((_a = msg.message) == null ? void 0 : _a.client_id) || this.config.client_id;
-      const client_secret = ((_b = msg.message) == null ? void 0 : _b.client_secret) || this.config.client_secret;
-      this.log.info("Try to validate login data and get vehicles");
-      try {
-        const token = await import_axios.default.post(`${this.URL}/authentication`, {
-          client_id,
-          client_secret,
-          grant_type: "app"
-        }).then((e) => e.data);
-        const vehicles = await import_axios.default.get(`${this.URL}/tronity/vehicles?limit=1000`, {
-          headers: {
-            Authorization: `Bearer ${token.access_token}`
-          }
-        }).then((e) => e.data);
-        const options = vehicles.data.map((v) => ({
-          label: `${v.manufacture} ${v.displayName}`,
-          value: v.id
-        }));
-        this.sendTo(msg.from, msg.command, options, msg.callback);
-      } catch (e) {
-        this.log.error(e);
-        this.sendTo(msg.from, msg.command, [], msg.callback);
-      }
-    }
-  }
-  onUnload(callback) {
-    try {
-      if (this.timeout) {
-        this.clearTimeout(this.timeout);
-      }
-      callback();
-    } catch {
-      callback();
-    }
-  }
-  async onStateChange(id, state) {
-    if (!state) {
-      return;
-    }
-    this.log.debug(`State Change: ${id} to ${state.val} ack ${state.ack}`);
-    if (this.config.vehicle_id && state.ack === false) {
-      const currentId = id.substring(this.namespace.length + 1);
-      switch (currentId) {
-        case "command.Charging":
-          if (state.val) {
-            try {
-              const token = await this.getToken();
-              await import_axios.default.post(
-                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`,
-                {},
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`
-                  }
-                }
-              );
-              this.log.info("Try to start charging!");
-            } catch (e) {
-              this.log.error(e);
+    async getToken() {
+        try {
+            if (cache.get(this.config.client_id)) {
+                return cache.get(this.config.client_id);
             }
-          } else {
-            try {
-              const token = await this.getToken();
-              await import_axios.default.post(
-                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`,
-                {},
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`
-                  }
-                }
-              );
-              this.log.info("Try to stop charging!");
-            } catch (e) {
-              this.log.error(e);
-            }
-          }
-          break;
-      }
+            const token = await import_axios.default
+                .post(`${this.URL}/authentication`, {
+                    client_id: this.config.client_id,
+                    client_secret: this.config.client_secret,
+                    grant_type: 'app',
+                })
+                .then(e => e.data);
+            cache.put(this.config.client_id, token.access_token, (token.expires_in - 120) * 1e3);
+            return token.access_token;
+        } catch (e) {
+            this.log.error(e);
+            throw Error(e);
+        }
     }
-  }
+    async updateVehicleData() {
+        var _a, _b, _c;
+        try {
+            if (this.config.vehicle_id) {
+                const token = await this.getToken();
+                const recordUrl = `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`;
+                const status = await import_axios.default
+                    .get(recordUrl, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    })
+                    .then(e => e.data);
+                if (status.odometer > -1) {
+                    await this.setState('odometer', status.odometer, true);
+                }
+                if (status.range > -1) {
+                    await this.setState('range', status.range, true);
+                }
+                if (status.level > -1) {
+                    await this.setState('level', status.level, true);
+                }
+                if (status.charging && status.charging.length > 0) {
+                    await this.setState('charging', status.charging, true);
+                    if (status.chargeRemainingTime > 0 && status.charging !== 'Disconnected') {
+                        await this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
+                    }
+                }
+                if (status.plugged !== null) {
+                    await this.setState('plugged', status.plugged, true);
+                }
+                if (status.chargerPower > 0) {
+                    await this.setState('chargerPower', status.chargerPower, true);
+                }
+                if (status.latitude !== null) {
+                    await this.setState('latitude', status.latitude, true);
+                }
+                if (status.longitude !== null) {
+                    await this.setState('longitude', status.longitude, true);
+                }
+                if (status.outTemp > -100) {
+                    await this.setState('outTemp', status.outTemp, true);
+                }
+                if (status.elevation > -100) {
+                    await this.setState('elevation', status.elevation, true);
+                }
+                if (status.timestamp) {
+                    await this.setState(
+                        'timestamp',
+                        typeof status.timestamp === 'number' ? status.timestamp : new Date(status.timestamp).getTime(),
+                        true,
+                    );
+                }
+                if (status.lastUpdate) {
+                    await this.setState(
+                        'lastUpdate',
+                        typeof status.lastUpdate === 'number'
+                            ? status.lastUpdate
+                            : new Date(status.lastUpdate).getTime(),
+                        true,
+                    );
+                }
+            }
+        } catch (e) {
+            const msg = (e == null ? void 0 : e.response)
+                ? `HTTP ${e.response.status} on ${(_b = (_a = e.config) == null ? void 0 : _a.url) != null ? _b : 'unknown URL'}: ${JSON.stringify(e.response.data)}`
+                : (_c = e == null ? void 0 : e.message) != null
+                  ? _c
+                  : String(e);
+            this.log.error(`updateVehicleData: ${msg}`);
+        }
+        this.timeout = this.setTimeout(() => {
+            void this.updateVehicleData();
+        }, 60 * 1e3);
+    }
+    async onMessage(msg) {
+        var _a, _b;
+        if (msg.command === 'validate') {
+            const client_id = ((_a = msg.message) == null ? void 0 : _a.client_id) || this.config.client_id;
+            const client_secret = ((_b = msg.message) == null ? void 0 : _b.client_secret) || this.config.client_secret;
+            this.log.info('Try to validate login data and get vehicles');
+            try {
+                const token = await import_axios.default
+                    .post(`${this.URL}/authentication`, {
+                        client_id,
+                        client_secret,
+                        grant_type: 'app',
+                    })
+                    .then(e => e.data);
+                const vehicles = await import_axios.default
+                    .get(`${this.URL}/tronity/vehicles?limit=1000`, {
+                        headers: {
+                            Authorization: `Bearer ${token.access_token}`,
+                        },
+                    })
+                    .then(e => e.data);
+                const options = vehicles.data.map(v => ({
+                    label: `${v.manufacture} ${v.displayName}`,
+                    value: v.id,
+                }));
+                this.sendTo(msg.from, msg.command, options, msg.callback);
+            } catch (e) {
+                this.log.error(e);
+                this.sendTo(msg.from, msg.command, [], msg.callback);
+            }
+        }
+    }
+    onUnload(callback) {
+        try {
+            if (this.timeout) {
+                this.clearTimeout(this.timeout);
+            }
+            callback();
+        } catch {
+            callback();
+        }
+    }
+    async onStateChange(id, state) {
+        if (!state) {
+            return;
+        }
+        this.log.debug(`State Change: ${id} to ${state.val} ack ${state.ack}`);
+        if (this.config.vehicle_id && state.ack === false) {
+            const currentId = id.substring(this.namespace.length + 1);
+            switch (currentId) {
+                case 'command.Charging':
+                    if (state.val) {
+                        try {
+                            const token = await this.getToken();
+                            await import_axios.default.post(
+                                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`,
+                                {},
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`,
+                                    },
+                                },
+                            );
+                            this.log.info('Try to start charging!');
+                        } catch (e) {
+                            this.log.error(e);
+                        }
+                    } else {
+                        try {
+                            const token = await this.getToken();
+                            await import_axios.default.post(
+                                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`,
+                                {},
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`,
+                                    },
+                                },
+                            );
+                            this.log.info('Try to stop charging!');
+                        } catch (e) {
+                            this.log.error(e);
+                        }
+                    }
+                    break;
+            }
+        }
+    }
 }
 if (require.main !== module) {
-  module.exports = (options) => new Tronity(options);
+    module.exports = options => new Tronity(options);
 } else {
-  (() => new Tronity())();
+    (() => new Tronity())();
 }
 //# sourceMappingURL=main.js.map
