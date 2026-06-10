@@ -5,11 +5,16 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "[typescript]": {
         "editor.codeActionsOnSave": {
+<<<<<<< Updated upstream
             "source.organizeImports": true
+=======
+            "source.organizeImports": "explicit"
+>>>>>>> Stashed changes
         }
     },
     "json.schemas": [
         {
+<<<<<<< Updated upstream
             "fileMatch": [
                 "io-package.json"
             ],
@@ -25,6 +30,10 @@
                 "admin/jsonTab.json5"
             ],
             "url": "https://raw.githubusercontent.com/ioBroker/ioBroker.admin/master/packages/jsonConfig/schemas/jsonConfig.json"
+=======
+            "fileMatch": ["io-package.json"],
+            "url": "https://json.schemastore.org/io-package"
+>>>>>>> Stashed changes
         }
     ]
 }
