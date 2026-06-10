@@ -19,7 +19,15 @@ class FakeAdapter {
     }
 }
 
-function loadAdapter() {
+type LoadedAdapter = {
+    adapter: FakeAdapter;
+    axiosPost: jest.Mock;
+    axiosGet: jest.Mock;
+    cacheGet: jest.Mock;
+    cachePut: jest.Mock;
+};
+
+async function loadAdapter(): Promise<LoadedAdapter> {
     jest.resetModules();
 
     const axiosPost = jest.fn();
@@ -31,7 +39,10 @@ function loadAdapter() {
     jest.doMock('axios', () => ({ __esModule: true, default: { post: axiosPost, get: axiosGet } }));
     jest.doMock('memory-cache', () => ({ get: cacheGet, put: cachePut }));
 
-    const createAdapter = require('../src/main') as (options?: Record<string, unknown>) => FakeAdapter;
+    const mainModule = (await import('../src/main')) as unknown as {
+        default?: (options?: Record<string, unknown>) => FakeAdapter;
+    };
+    const createAdapter = mainModule.default as (options?: Record<string, unknown>) => FakeAdapter;
     const adapter = createAdapter();
 
     return { adapter, axiosPost, axiosGet, cacheGet, cachePut };
@@ -39,7 +50,7 @@ function loadAdapter() {
 
 describe('Tronity adapter (Jest)', () => {
     it('returns vehicle options on validate message', async () => {
-        const { adapter, axiosPost, axiosGet } = loadAdapter();
+        const { adapter, axiosPost, axiosGet } = await loadAdapter();
         axiosPost.mockResolvedValue({ data: { access_token: 'token-1', expires_in: 3600 } });
         axiosGet.mockResolvedValue({
             data: {
@@ -64,7 +75,7 @@ describe('Tronity adapter (Jest)', () => {
     });
 
     it('returns empty options on validate error', async () => {
-        const { adapter, axiosPost } = loadAdapter();
+        const { adapter, axiosPost } = await loadAdapter();
         axiosPost.mockRejectedValue(new Error('auth failed'));
 
         await (adapter as unknown as { onMessage: (msg: unknown) => Promise<void> }).onMessage({
@@ -83,7 +94,7 @@ describe('Tronity adapter (Jest)', () => {
     });
 
     it('starts charging when command.Charging is true', async () => {
-        const { adapter, axiosPost, cacheGet } = loadAdapter();
+        const { adapter, axiosPost, cacheGet } = await loadAdapter();
         cacheGet.mockReturnValue('cached-token');
         adapter.config = {
             client_id: 'client-id',
@@ -99,7 +110,7 @@ describe('Tronity adapter (Jest)', () => {
     });
 
     it('stops charging when command.Charging is false', async () => {
-        const { adapter, axiosPost, cacheGet } = loadAdapter();
+        const { adapter, axiosPost, cacheGet } = await loadAdapter();
         cacheGet.mockReturnValue('cached-token');
         adapter.config = {
             client_id: 'client-id',

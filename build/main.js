@@ -156,7 +156,9 @@ class Tronity extends utils.Adapter {
       const msg = (e == null ? void 0 : e.response) ? `HTTP ${e.response.status} on ${(_b = (_a = e.config) == null ? void 0 : _a.url) != null ? _b : "unknown URL"}: ${JSON.stringify(e.response.data)}` : (_c = e == null ? void 0 : e.message) != null ? _c : String(e);
       this.log.error(`updateVehicleData: ${msg}`);
     }
-    this.timeout = setTimeout(() => this.updateVehicleData(), 60 * 1e3);
+    this.timeout = setTimeout(() => {
+      void this.updateVehicleData();
+    }, 60 * 1e3);
   }
   async onMessage(msg) {
     var _a, _b;
