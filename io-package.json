@@ -19,6 +19,7 @@
             },
             "1.2.0": {
                 "en": "small bugfixes",
+                "uk": "small bugfixes",
                 "de": "kleine Fehlerbehebungen",
                 "ru": "небольшие исправления",
                 "pt": "pequenas correções de bugs",
@@ -31,6 +32,7 @@
             },
             "1.1.1": {
                 "en": "small bugfixes",
+                "uk": "small bugfixes",
                 "de": "kleine Fehlerbehebungen",
                 "ru": "небольшие исправления",
                 "pt": "pequenas correções de bugs",
@@ -43,6 +45,7 @@
             },
             "1.1.0": {
                 "en": "small bugfixes",
+                "uk": "small bugfixes",
                 "de": "kleine Fehlerbehebungen",
                 "ru": "небольшие исправления",
                 "pt": "pequenas correções de bugs",
@@ -55,6 +58,7 @@
             },
             "1.0.1": {
                 "en": "initial release",
+                "uk": "initial release",
                 "de": "Erstveröffentlichung",
                 "ru": "Первый выпуск",
                 "pt": "lançamento inicial",

@@ -109,47 +109,47 @@ class Tronity extends utils.Adapter {
                     lastUpdate: number;
                 };
                 if (status.odometer > -1) {
-                    this.setState('odometer', status.odometer, true);
+                    await this.setState('odometer', status.odometer, true);
                 }
                 if (status.range > -1) {
-                    this.setState('range', status.range, true);
+                    await this.setState('range', status.range, true);
                 }
                 if (status.level > -1) {
-                    this.setState('level', status.level, true);
+                    await this.setState('level', status.level, true);
                 }
                 if (status.charging && status.charging.length > 0) {
-                    this.setState('charging', status.charging, true);
+                    await this.setState('charging', status.charging, true);
                     if (status.chargeRemainingTime > 0 && status.charging !== 'Disconnected') {
-                        this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
+                        await this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
                     }
                 }
                 if (status.plugged !== null) {
-                    this.setState('plugged', status.plugged, true);
+                    await this.setState('plugged', status.plugged, true);
                 }
                 if (status.chargerPower > 0) {
-                    this.setState('chargerPower', status.chargerPower, true);
+                    await this.setState('chargerPower', status.chargerPower, true);
                 }
                 if (status.latitude !== null) {
-                    this.setState('latitude', status.latitude, true);
+                    await this.setState('latitude', status.latitude, true);
                 }
                 if (status.longitude !== null) {
-                    this.setState('longitude', status.longitude, true);
+                    await this.setState('longitude', status.longitude, true);
                 }
                 if (status.outTemp > -100) {
-                    this.setState('outTemp', status.outTemp, true);
+                    await this.setState('outTemp', status.outTemp, true);
                 }
                 if (status.elevation > -100) {
-                    this.setState('elevation', status.elevation, true);
+                    await this.setState('elevation', status.elevation, true);
                 }
                 if (status.timestamp) {
-                    this.setState(
+                    await this.setState(
                         'timestamp',
                         typeof status.timestamp === 'number' ? status.timestamp : new Date(status.timestamp).getTime(),
                         true,
                     );
                 }
                 if (status.lastUpdate) {
-                    this.setState(
+                    await this.setState(
                         'lastUpdate',
                         typeof status.lastUpdate === 'number'
                             ? status.lastUpdate
