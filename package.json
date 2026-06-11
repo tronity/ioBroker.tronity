@@ -107,6 +107,9 @@
     "readmeFilename": "README.md",
     "overrides": {
         "serialize-javascript": "7.0.5",
-        "esbuild": "0.25.12"
+        "esbuild": "0.25.12",
+        "request": {
+            "form-data": "2.5.5"
+        }
     }
 }
