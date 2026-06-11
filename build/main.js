@@ -25,13 +25,13 @@ var utils = __toESM(require("@iobroker/adapter-core"));
 var import_axios = __toESM(require("axios"));
 var cache = __toESM(require("memory-cache"));
 class Tronity extends utils.Adapter {
+  timeout = null;
+  URL = "https://api.tronity.tech";
   constructor(options = {}) {
     super({
       ...options,
       name: "tronity"
     });
-    this.timeout = null;
-    this.URL = "https://api.tronity.tech";
     this.on("ready", this.onReady.bind(this));
     this.on("stateChange", this.onStateChange.bind(this));
     this.on("message", this.onMessage.bind(this));
@@ -105,47 +105,47 @@ class Tronity extends utils.Adapter {
           }
         }).then((e) => e.data);
         if (status.odometer > -1) {
-          this.setState("odometer", status.odometer, true);
+          await this.setState("odometer", status.odometer, true);
         }
         if (status.range > -1) {
-          this.setState("range", status.range, true);
+          await this.setState("range", status.range, true);
         }
         if (status.level > -1) {
-          this.setState("level", status.level, true);
+          await this.setState("level", status.level, true);
         }
         if (status.charging && status.charging.length > 0) {
-          this.setState("charging", status.charging, true);
+          await this.setState("charging", status.charging, true);
           if (status.chargeRemainingTime > 0 && status.charging !== "Disconnected") {
-            this.setState("chargeRemainingTime", status.chargeRemainingTime, true);
+            await this.setState("chargeRemainingTime", status.chargeRemainingTime, true);
           }
         }
         if (status.plugged !== null) {
-          this.setState("plugged", status.plugged, true);
+          await this.setState("plugged", status.plugged, true);
         }
         if (status.chargerPower > 0) {
-          this.setState("chargerPower", status.chargerPower, true);
+          await this.setState("chargerPower", status.chargerPower, true);
         }
         if (status.latitude !== null) {
-          this.setState("latitude", status.latitude, true);
+          await this.setState("latitude", status.latitude, true);
         }
         if (status.longitude !== null) {
-          this.setState("longitude", status.longitude, true);
+          await this.setState("longitude", status.longitude, true);
         }
         if (status.outTemp > -100) {
-          this.setState("outTemp", status.outTemp, true);
+          await this.setState("outTemp", status.outTemp, true);
         }
         if (status.elevation > -100) {
-          this.setState("elevation", status.elevation, true);
+          await this.setState("elevation", status.elevation, true);
         }
         if (status.timestamp) {
-          this.setState(
+          await this.setState(
             "timestamp",
             typeof status.timestamp === "number" ? status.timestamp : new Date(status.timestamp).getTime(),
             true
           );
         }
         if (status.lastUpdate) {
-          this.setState(
+          await this.setState(
             "lastUpdate",
             typeof status.lastUpdate === "number" ? status.lastUpdate : new Date(status.lastUpdate).getTime(),
             true
@@ -156,7 +156,9 @@ class Tronity extends utils.Adapter {
       const msg = (e == null ? void 0 : e.response) ? `HTTP ${e.response.status} on ${(_b = (_a = e.config) == null ? void 0 : _a.url) != null ? _b : "unknown URL"}: ${JSON.stringify(e.response.data)}` : (_c = e == null ? void 0 : e.message) != null ? _c : String(e);
       this.log.error(`updateVehicleData: ${msg}`);
     }
-    this.timeout = setTimeout(() => this.updateVehicleData(), 60 * 1e3);
+    this.timeout = this.setTimeout(() => {
+      void this.updateVehicleData();
+    }, 60 * 1e3);
   }
   async onMessage(msg) {
     var _a, _b;
@@ -189,7 +191,7 @@ class Tronity extends utils.Adapter {
   onUnload(callback) {
     try {
       if (this.timeout) {
-        clearTimeout(this.timeout);
+        this.clearTimeout(this.timeout);
       }
       callback();
     } catch {
