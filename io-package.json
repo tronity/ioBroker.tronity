@@ -1,9 +1,22 @@
 {
     "common": {
         "name": "tronity",
-        "version": "1.2.1",
+        "version": "1.2.2",
         "tier": 3,
         "news": {
+            "1.2.2": {
+                "en": "Updated dependencies and fixed GitHub and security issues",
+                "uk": "Updated dependencies and fixed GitHub and security issues",
+                "de": "Abhängigkeiten aktualisiert sowie GitHub- und Sicherheitsprobleme behoben",
+                "ru": "Обновлены зависимости и исправлены проблемы GitHub и безопасности",
+                "pt": "Dependências atualizadas e problemas de GitHub e segurança corrigidos",
+                "nl": "Afhankelijkheden bijgewerkt en GitHub- en beveiligingsproblemen opgelost",
+                "fr": "Dépendances mises à jour et problèmes GitHub et de sécurité corrigés",
+                "it": "Dipendenze aggiornate e problemi GitHub e di sicurezza risolti",
+                "es": "Dependencias actualizadas y problemas de GitHub y seguridad corregidos",
+                "pl": "Zaktualizowano zależności i naprawiono problemy GitHub oraz bezpieczeństwa",
+                "zh-cn": "已更新依赖并修复 GitHub 和安全问题"
+            },
             "1.2.1": {
                 "en": "small bugfixes",
                 "uk": "small bugfixes",

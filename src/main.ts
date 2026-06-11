@@ -212,7 +212,7 @@ class Tronity extends utils.Adapter {
     private onUnload(callback: () => void): void {
         try {
             if (this.timeout) {
-                clearTimeout(this.timeout);
+                this.clearTimeout(this.timeout);
             }
             callback();
         } catch {

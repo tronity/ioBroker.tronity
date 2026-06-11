@@ -25,13 +25,13 @@ var utils = __toESM(require("@iobroker/adapter-core"));
 var import_axios = __toESM(require("axios"));
 var cache = __toESM(require("memory-cache"));
 class Tronity extends utils.Adapter {
+  timeout = null;
+  URL = "https://api.tronity.tech";
   constructor(options = {}) {
     super({
       ...options,
       name: "tronity"
     });
-    this.timeout = null;
-    this.URL = "https://api.tronity.tech";
     this.on("ready", this.onReady.bind(this));
     this.on("stateChange", this.onStateChange.bind(this));
     this.on("message", this.onMessage.bind(this));
@@ -191,7 +191,7 @@ class Tronity extends utils.Adapter {
   onUnload(callback) {
     try {
       if (this.timeout) {
-        clearTimeout(this.timeout);
+        this.clearTimeout(this.timeout);
       }
       callback();
     } catch {
