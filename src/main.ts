@@ -164,7 +164,7 @@ class Tronity extends utils.Adapter {
                 : (e?.message ?? String(e));
             this.log.error(`updateVehicleData: ${msg}`);
         }
-        this.timeout = setTimeout(() => {
+        this.timeout = this.setTimeout(() => {
             void this.updateVehicleData();
         }, 60 * 1000);
     }
