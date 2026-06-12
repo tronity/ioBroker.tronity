@@ -2,5 +2,8 @@
     "Adapter settings for Tronity": "Configuracoes do adaptador para TRONITY",
     "Description": "Para recuperar dados, client_id e client_secret devem ser inseridos na plataforma TRONITY. Em seguida, verifique os valores e selecione o veiculo. https://app.tronity.tech/",
     "Check Login Data": "Verificar dados de login",
-    "Select your Car": "Selecione seu carro"
+    "Select your Car": "Selecione seu carro",
+    "Client ID": "ID do cliente",
+    "Client Secret": "Segredo do cliente",
+    "Vehicle": "Veiculo"
 }
