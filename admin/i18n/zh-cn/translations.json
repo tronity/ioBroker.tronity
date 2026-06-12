@@ -2,5 +2,8 @@
     "Adapter settings for Tronity": "TRONITY de peiqi shezhi",
     "Description": "Yao jiansuo shuju, bixu cong TRONITY pingtai shuru client_id he client_secret. Ranhou jiancha shuzhi bing xuanze cheliang. https://app.tronity.tech/",
     "Check Login Data": "Jiancha denglu shuju",
-    "Select your Car": "Xuanze nin de qiche"
+    "Select your Car": "Xuanze nin de qiche",
+    "Client ID": "Client ID",
+    "Client Secret": "Client Secret",
+    "Vehicle": "Qiche"
 }

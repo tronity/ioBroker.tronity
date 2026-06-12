@@ -2,5 +2,8 @@
     "Adapter settings for Tronity": "Adaptereinstellungen fuer TRONITY",
     "Description": "Um Daten abzurufen, muessen client_id und client_secret von der TRONITY-Plattform eingegeben werden. Ueberpruefen Sie dann die Werte und waehlen Sie das Fahrzeug aus. https://app.tronity.tech/",
     "Check Login Data": "Anmeldedaten pruefen",
-    "Select your Car": "Waehlen Sie Ihr Auto aus"
+    "Select your Car": "Waehlen Sie Ihr Auto aus",
+    "Client ID": "Client-ID",
+    "Client Secret": "Client Secret",
+    "Vehicle": "Fahrzeug"
 }

@@ -2,5 +2,8 @@
     "Adapter settings for Tronity": "Nastroiki adaptera dlia Tronity",
     "Description": "Chtoby poluchit dannye, client_id i client_secret dolzhny byt vvedeny s platformy TRONITY. Zatem prover'te znacheniia i vyberite avtomobil'. https://app.tronity.tech/",
     "Check Login Data": "Proverit dannye dlia vhoda",
-    "Select your Car": "Vyberite svoi avtomobil'"
+    "Select your Car": "Vyberite svoi avtomobil'",
+    "Client ID": "ID klienta",
+    "Client Secret": "Sekret klienta",
+    "Vehicle": "Transportnoe sredstvo"
 }

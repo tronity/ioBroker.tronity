@@ -37,7 +37,12 @@ the adapter.
 -->
 
 ### **WORK IN PROGRESS**
-- (copilot) Adapter requires node.js >= 22 now
+
+### 1.2.2 (2026-06-12)
+
+- updated dependencies
+- fixed GitHub and security issues
+- adapter requires node.js >= 22
 
 ### 1.2.1 (2025-04-07)
 
