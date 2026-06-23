@@ -48,7 +48,7 @@
         "@alcalzone/release-script-plugin-license": "^5.2.0",
         "@iobroker/adapter-dev": "^1.5.0",
         "@iobroker/dev-server": "^0.8.0",
-        "@iobroker/eslint-config": "^2.2.0",
+        "@iobroker/eslint-config": "^ 2.2.0",
         "@iobroker/testing": "^5.2.2",
         "@tsconfig/node22": "^22.0.5",
         "@types/jest": "^29.5.14",
@@ -62,12 +62,6 @@
         "ts-jest": "^29.3.4",
         "ts-node": "^10.9.2",
         "typescript": "^5.8.3",
-        "@types/sinon": "^10.0.20",
-        "@types/sinon-chai": "^3.2.12",
-        "chai": "^4.5.0",
-        "chai-as-promised": "^8.0.2",
-        "@types/chai": "^4.3.20",
-        "@types/chai-as-promised": "^8.0.2",
         "@types/mocha": "^10.0.10"
     },
     "main": "build/main.js",
@@ -109,9 +103,9 @@
         "serialize-javascript": "7.0.5",
         "esbuild": "0.25.12",
         "tough-cookie": "4.1.3",
-        "xmldom": "npm:@xmldom/xmldom@0.9.10",
+        "xmldom": "npm:@xmldom/xmldom@0.7.7",
         "dom-compare-temp": {
-            "xmldom": "npm:@xmldom/xmldom@0.9.10"
+            "xmldom": "npm:@xmldom/xmldom@0.7.7"
         },
         "request": {
             "qs": "6.15.2",
