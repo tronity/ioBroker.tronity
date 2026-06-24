@@ -10,17 +10,7 @@
     },
     "json.schemas": [
         {
-<<<<<<< HEAD
-<<<<<<< HEAD
             "fileMatch": ["io-package.json"],
-=======
-            "fileMatch": [
-                "io-package.json"
-            ],
->>>>>>> 105f76b (chore: fix security issues updating dependencies)
-=======
-            "fileMatch": ["io-package.json"],
->>>>>>> f009a00 (chore: fix settings.json, add link to translation)
             "url": "https://raw.githubusercontent.com/ioBroker/ioBroker.js-controller/master/schemas/io-package.json"
         },
         {
