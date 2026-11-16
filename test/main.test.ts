@@ -110,6 +110,61 @@ describe('Tronity adapter (Jest)', () => {
         expect(adapter.log.error).toHaveBeenCalledWith(expect.stringContaining('auth failed'));
     });
 
+    it('does not call the API for the vehicle list without credentials', async () => {
+        const { adapter, axiosPost } = await loadAdapter();
+
+        await adapter.onMessage({ command: 'validate', message: null, from: 'admin', callback: 'cb' });
+
+        expect(axiosPost).not.toHaveBeenCalled();
+        expect(adapter.sendTo.mock.calls[0][2]).toEqual([]);
+    });
+
+    it('reports the number of vehicles on testConnection', async () => {
+        const { adapter, axiosPost, axiosGet } = await loadAdapter();
+        axiosPost.mockResolvedValue(TOKEN);
+        axiosGet.mockResolvedValue({ data: { data: [{ id: 'a' }, { id: 'b' }] } });
+
+        await adapter.onMessage({
+            command: 'testConnection',
+            message: { client_id: 'client-id', client_secret: 'client-secret' },
+            from: 'admin',
+            callback: 'cb',
+        });
+
+        expect(axiosPost.mock.calls[0][1]).toMatchObject({ client_id: 'client-id', client_secret: 'client-secret' });
+        expect(adapter.sendTo.mock.calls[0][2]).toEqual({ result: 'ok', args: ['2'] });
+    });
+
+    it('reports invalid credentials on testConnection', async () => {
+        const { adapter, axiosPost } = await loadAdapter();
+        axiosPost.mockRejectedValue(httpError(401));
+
+        await adapter.onMessage({
+            command: 'testConnection',
+            message: { client_id: 'client-id', client_secret: 'wrong' },
+            from: 'admin',
+            callback: 'cb',
+        });
+
+        expect(adapter.sendTo.mock.calls[0][2]).toEqual({
+            error: 'Login failed. Please check client ID and client secret.',
+        });
+    });
+
+    it('asks for credentials on testConnection when fields are empty', async () => {
+        const { adapter, axiosPost } = await loadAdapter();
+
+        await adapter.onMessage({
+            command: 'testConnection',
+            message: { client_id: '', client_secret: '' },
+            from: 'admin',
+            callback: 'cb',
+        });
+
+        expect(axiosPost).not.toHaveBeenCalled();
+        expect(adapter.sendTo.mock.calls[0][2]).toEqual({ error: 'Please enter client ID and client secret first.' });
+    });
+
     it('starts charging and acknowledges the command', async () => {
         const { adapter, axiosPost } = await loadAdapter();
         adapter.config = { ...CONFIG };

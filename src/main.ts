@@ -53,6 +53,12 @@ interface VehicleRecord {
     lastUpdate?: number | string | null;
 }
 
+interface Vehicle {
+    id: string;
+    displayName: string;
+    manufacture: string;
+}
+
 interface TokenResponse {
     access_token: string;
     expires_in: number;
@@ -270,27 +276,39 @@ class Tronity extends utils.Adapter {
         }
     }
 
+    private async fetchVehicles(client_id: string, client_secret: string): Promise<Vehicle[]> {
+        const token = await this.requestToken(client_id, client_secret);
+        const response = await axios.get(`${API_URL}/tronity/vehicles?limit=1000`, {
+            headers: { Authorization: `Bearer ${token.access_token}` },
+            timeout: REQUEST_TIMEOUT_MS,
+        });
+        return (response.data as { data?: Vehicle[] }).data ?? [];
+    }
+
     private async onMessage(msg: ioBroker.Message): Promise<void> {
-        if (msg.command !== 'validate') {
+        if (msg.command !== 'validate' && msg.command !== 'testConnection') {
             return;
         }
-        // credentials come from the current form values (selectSendTo sends all config fields)
+        // The admin form sends the current (possibly unsaved) values via jsonData; fall back to the saved config
         const message = (msg.message ?? {}) as { client_id?: string; client_secret?: string };
         const client_id = message.client_id || this.config.client_id;
         const client_secret = message.client_secret || this.config.client_secret;
 
+        if (msg.command === 'testConnection') {
+            await this.testConnection(msg, client_id, client_secret);
+            return;
+        }
+
+        if (!client_id || !client_secret) {
+            // nothing entered yet - no need to call the API
+            this.sendTo(msg.from, msg.command, [], msg.callback);
+            return;
+        }
         this.log.info('Try to validate login data and get vehicles');
         try {
-            const token = await this.requestToken(client_id, client_secret);
-            const response = await axios.get(`${API_URL}/tronity/vehicles?limit=1000`, {
-                headers: { Authorization: `Bearer ${token.access_token}` },
-                timeout: REQUEST_TIMEOUT_MS,
-            });
-            const vehicles = response.data as {
-                data: Array<{ id: string; displayName: string; manufacture: string }>;
-            };
+            const vehicles = await this.fetchVehicles(client_id, client_secret);
             // Return [{label, value}] array as required by the selectSendTo component
-            const options = vehicles.data.map(v => ({
+            const options = vehicles.map(v => ({
                 label: `${v.manufacture} ${v.displayName}`,
                 value: v.id,
             }));
@@ -298,6 +316,36 @@ class Tronity extends utils.Adapter {
         } catch (e: any) {
             this.log.error(`Could not validate login data: ${formatError(e)}`);
             this.sendTo(msg.from, msg.command, [], msg.callback);
+        }
+    }
+
+    /**
+     * Answers the "Check Login Data" button: `{result, args}` on success, `{error}` otherwise.
+     *
+     * @param msg message from the admin UI
+     * @param client_id client ID entered in the form
+     * @param client_secret client secret entered in the form
+     */
+    private async testConnection(msg: ioBroker.Message, client_id: string, client_secret: string): Promise<void> {
+        if (!client_id || !client_secret) {
+            this.sendTo(
+                msg.from,
+                msg.command,
+                { error: 'Please enter client ID and client secret first.' },
+                msg.callback,
+            );
+            return;
+        }
+        try {
+            const vehicles = await this.fetchVehicles(client_id, client_secret);
+            this.log.info(`Login data valid, ${vehicles.length} vehicle(s) found`);
+            this.sendTo(msg.from, msg.command, { result: 'ok', args: [String(vehicles.length)] }, msg.callback);
+        } catch (e: any) {
+            this.log.warn(`Login data check failed: ${formatError(e)}`);
+            const error = isUnauthorized(e)
+                ? 'Login failed. Please check client ID and client secret.'
+                : `Connection to TRONITY failed: ${e?.response ? `HTTP ${e.response.status}` : (e?.message ?? String(e))}`;
+            this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
     }
 

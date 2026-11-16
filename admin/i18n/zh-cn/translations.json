@@ -6,5 +6,9 @@
     "Client ID": "Client ID",
     "Client Secret": "Client Secret",
     "Vehicle": "Qiche",
-    "Polling interval (seconds)": "轮询间隔（秒）"
+    "Polling interval (seconds)": "轮询间隔（秒）",
+    "Connection successful. %s vehicle(s) found.": "连接成功。找到 %s 辆车。",
+    "Login failed. Please check client ID and client secret.": "登录失败。请检查 Client ID 和 Client Secret。",
+    "Please enter client ID and client secret first.": "请先输入 Client ID 和 Client Secret。",
+    "Vehicle list is loaded with the client ID and secret entered above.": "车辆列表将使用上方输入的 Client ID 和 Secret 加载。"
 }

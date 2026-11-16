@@ -238,23 +238,35 @@ class Tronity extends utils.Adapter {
       await this.setState("lastUpdate", lastUpdate, true);
     }
   }
+  async fetchVehicles(client_id, client_secret) {
+    var _a;
+    const token = await this.requestToken(client_id, client_secret);
+    const response = await import_axios.default.get(`${API_URL}/tronity/vehicles?limit=1000`, {
+      headers: { Authorization: `Bearer ${token.access_token}` },
+      timeout: REQUEST_TIMEOUT_MS
+    });
+    return (_a = response.data.data) != null ? _a : [];
+  }
   async onMessage(msg) {
     var _a;
-    if (msg.command !== "validate") {
+    if (msg.command !== "validate" && msg.command !== "testConnection") {
       return;
     }
     const message = (_a = msg.message) != null ? _a : {};
     const client_id = message.client_id || this.config.client_id;
     const client_secret = message.client_secret || this.config.client_secret;
+    if (msg.command === "testConnection") {
+      await this.testConnection(msg, client_id, client_secret);
+      return;
+    }
+    if (!client_id || !client_secret) {
+      this.sendTo(msg.from, msg.command, [], msg.callback);
+      return;
+    }
     this.log.info("Try to validate login data and get vehicles");
     try {
-      const token = await this.requestToken(client_id, client_secret);
-      const response = await import_axios.default.get(`${API_URL}/tronity/vehicles?limit=1000`, {
-        headers: { Authorization: `Bearer ${token.access_token}` },
-        timeout: REQUEST_TIMEOUT_MS
-      });
-      const vehicles = response.data;
-      const options = vehicles.data.map((v) => ({
+      const vehicles = await this.fetchVehicles(client_id, client_secret);
+      const options = vehicles.map((v) => ({
         label: `${v.manufacture} ${v.displayName}`,
         value: v.id
       }));
@@ -262,6 +274,34 @@ class Tronity extends utils.Adapter {
     } catch (e) {
       this.log.error(`Could not validate login data: ${formatError(e)}`);
       this.sendTo(msg.from, msg.command, [], msg.callback);
+    }
+  }
+  /**
+   * Answers the "Check Login Data" button: `{result, args}` on success, `{error}` otherwise.
+   *
+   * @param msg message from the admin UI
+   * @param client_id client ID entered in the form
+   * @param client_secret client secret entered in the form
+   */
+  async testConnection(msg, client_id, client_secret) {
+    var _a;
+    if (!client_id || !client_secret) {
+      this.sendTo(
+        msg.from,
+        msg.command,
+        { error: "Please enter client ID and client secret first." },
+        msg.callback
+      );
+      return;
+    }
+    try {
+      const vehicles = await this.fetchVehicles(client_id, client_secret);
+      this.log.info(`Login data valid, ${vehicles.length} vehicle(s) found`);
+      this.sendTo(msg.from, msg.command, { result: "ok", args: [String(vehicles.length)] }, msg.callback);
+    } catch (e) {
+      this.log.warn(`Login data check failed: ${formatError(e)}`);
+      const error = isUnauthorized(e) ? "Login failed. Please check client ID and client secret." : `Connection to TRONITY failed: ${(e == null ? void 0 : e.response) ? `HTTP ${e.response.status}` : (_a = e == null ? void 0 : e.message) != null ? _a : String(e)}`;
+      this.sendTo(msg.from, msg.command, { error }, msg.callback);
     }
   }
   onUnload(callback) {

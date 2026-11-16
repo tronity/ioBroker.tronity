@@ -6,5 +6,9 @@
     "Client ID": "Client-ID",
     "Client Secret": "Client Secret",
     "Vehicle": "Voertuig",
-    "Polling interval (seconds)": "Pollinginterval (seconden)"
+    "Polling interval (seconds)": "Pollinginterval (seconden)",
+    "Connection successful. %s vehicle(s) found.": "Verbinding geslaagd. %s voertuig(en) gevonden.",
+    "Login failed. Please check client ID and client secret.": "Aanmelden mislukt. Controleer client-ID en client secret.",
+    "Please enter client ID and client secret first.": "Voer eerst client-ID en client secret in.",
+    "Vehicle list is loaded with the client ID and secret entered above.": "De voertuiglijst wordt geladen met de hierboven ingevoerde client-ID en secret."
 }
