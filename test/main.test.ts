@@ -59,7 +59,8 @@ async function loadAdapter(): Promise<LoadedAdapter> {
 }
 
 function stateValue(adapter: FakeAdapter, id: string): unknown {
-    const mock = id === 'info.connection' ? adapter.setStateChangedAsync : adapter.setState;
+    const mock =
+        id === 'info.connection' || id === 'command.Charging' ? adapter.setStateChangedAsync : adapter.setState;
     const calls = mock.mock.calls.filter(c => c[0] === id);
     return calls.length ? calls[calls.length - 1][1] : undefined;
 }
@@ -281,6 +282,32 @@ describe('Tronity adapter (Jest)', () => {
         expect(stateValue(adapter, 'chargerPower')).toBe(0);
         expect(stateValue(adapter, 'chargeRemainingTime')).toBe(0);
         expect(stateValue(adapter, 'plugged')).toBe(false);
+    });
+
+    it('reports charging state and remaining time while charging', async () => {
+        const { adapter, axiosPost, axiosGet } = await loadAdapter();
+        adapter.config = { ...CONFIG };
+        axiosPost.mockResolvedValue(TOKEN);
+        // real response of a VW Passat GTE while charging
+        axiosGet.mockResolvedValue({
+            data: { charging: 'Charging', plugged: true, chargerPower: null, chargeRemainingTime: 34800, level: 1 },
+        });
+
+        await adapter.poll();
+
+        expect(stateValue(adapter, 'command.Charging')).toBe(true);
+        expect(stateValue(adapter, 'chargeRemainingTime')).toBe(34800);
+    });
+
+    it('reports not charging when charging is complete', async () => {
+        const { adapter, axiosPost, axiosGet } = await loadAdapter();
+        adapter.config = { ...CONFIG };
+        axiosPost.mockResolvedValue(TOKEN);
+        axiosGet.mockResolvedValue({ data: { charging: 'Complete', plugged: true } });
+
+        await adapter.poll();
+
+        expect(stateValue(adapter, 'command.Charging')).toBe(false);
     });
 
     it('writes zero charger power while plugged in', async () => {

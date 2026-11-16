@@ -40,7 +40,8 @@ const STATES: StateDefinition[] = [
         id: 'chargeRemainingTime',
         name: { en: 'Remaining charging time', de: 'Restladezeit' },
         type: 'number',
-        role: 'value',
+        role: 'value.interval',
+        unit: 's',
     },
     { id: 'plugged', name: { en: 'Plugged in', de: 'Ladekabel eingesteckt' }, type: 'boolean', role: 'indicator' },
     {
@@ -286,6 +287,8 @@ class Tronity extends utils.Adapter {
         }
         if (typeof status.charging === 'string' && status.charging.length > 0) {
             await this.setState('charging', status.charging, true);
+            // reflect the real charging state in the command state (known values: Charging, Complete, Disconnected, Error)
+            await this.setStateChangedAsync('command.Charging', status.charging === 'Charging', true);
         }
         if (typeof status.plugged === 'boolean') {
             await this.setState('plugged', status.plugged, true);
