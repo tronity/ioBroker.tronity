@@ -5,5 +5,6 @@
     "Select your Car": "Wybierz swoj samochod",
     "Client ID": "ID klienta",
     "Client Secret": "Sekret klienta",
-    "Vehicle": "Pojazd"
+    "Vehicle": "Pojazd",
+    "Polling interval (seconds)": "Interwał odpytywania (sekundy)"
 }

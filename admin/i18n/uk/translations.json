@@ -5,5 +5,6 @@
     "Select your Car": "Oberit svii avtomobil",
     "Client ID": "ID kliienta",
     "Client Secret": "Sekret kliienta",
-    "Vehicle": "Transportnyi zasib"
+    "Vehicle": "Transportnyi zasib",
+    "Polling interval (seconds)": "Інтервал опитування (секунди)"
 }

@@ -2,6 +2,16 @@
 	"i18n": true,
 	"type": "panel",
 	"items": {
+		"_description": {
+			"type": "staticText",
+			"text": "Description",
+			"newLine": true,
+			"xs": 12,
+			"sm": 12,
+			"md": 12,
+			"lg": 12,
+			"xl": 12
+		},
 		"client_id": {
 			"type": "text",
 			"label": "Client ID",
@@ -26,6 +36,19 @@
 			"type": "selectSendTo",
 			"command": "validate",
 			"label": "Vehicle",
+			"newLine": true,
+			"xs": 12,
+			"sm": 12,
+			"md": 6,
+			"lg": 4,
+			"xl": 4
+		},
+		"interval": {
+			"type": "number",
+			"label": "Polling interval (seconds)",
+			"min": 30,
+			"max": 3600,
+			"default": 60,
 			"newLine": true,
 			"xs": 12,
 			"sm": 12,

@@ -170,7 +170,8 @@
     "native": {
         "client_id": "",
         "client_secret": "",
-        "vehicle_id": ""
+        "vehicle_id": "",
+        "interval": 60
     },
     "objects": [],
     "instanceObjects": [

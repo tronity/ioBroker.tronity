@@ -5,5 +5,6 @@
     "Select your Car": "Select your Car",
     "Client ID": "Client ID",
     "Client Secret": "Client Secret",
-    "Vehicle": "Vehicle"
+    "Vehicle": "Vehicle",
+    "Polling interval (seconds)": "Polling interval (seconds)"
 }

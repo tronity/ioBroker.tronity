@@ -38,6 +38,16 @@ the adapter.
 
 ### **WORK IN PROGRESS**
 
+- (IggePop) fixed charger power and remaining charge time keeping their last value after charging ended
+- (IggePop) `info.connection` now reflects whether the TRONITY API can actually be reached
+- (IggePop) added request timeout, so a hanging request no longer stops polling
+- (IggePop) `command.Charging` is acknowledged after the command was accepted
+- (IggePop) access token is renewed on HTTP 401
+- (IggePop) value states are read-only and have proper roles and units; unused state `power` removed
+- (IggePop) polling interval is configurable (default 60 s, minimum 30 s)
+- (IggePop) improved error messages and warning for incomplete configuration
+- (IggePop) removed dependency `memory-cache`
+
 ### 1.2.2 (2026-06-12)
 
 - updated dependencies
