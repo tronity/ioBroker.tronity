@@ -16,8 +16,6 @@ interface StateDefinition {
     role: string;
     unit?: string;
     write?: boolean;
-    /** Only created once the API delivers a value (not every vehicle/endpoint provides it) */
-    optional?: boolean;
 }
 
 const STATES: StateDefinition[] = [
@@ -67,22 +65,6 @@ const STATES: StateDefinition[] = [
         unit: '°',
     },
     {
-        id: 'outTemp',
-        name: { en: 'Outside temperature', de: 'Außentemperatur' },
-        type: 'number',
-        role: 'value.temperature',
-        unit: '°C',
-        optional: true,
-    },
-    {
-        id: 'elevation',
-        name: { en: 'Elevation', de: 'Höhe' },
-        type: 'number',
-        role: 'value.gps.elevation',
-        unit: 'm',
-        optional: true,
-    },
-    {
         id: 'timestamp',
         name: { en: 'Time of the record', de: 'Zeitpunkt des Datensatzes' },
         type: 'number',
@@ -91,8 +73,8 @@ const STATES: StateDefinition[] = [
     { id: 'lastUpdate', name: { en: 'Last update', de: 'Letzte Aktualisierung' }, type: 'number', role: 'value.time' },
 ];
 
-/** States created by older versions that are no longer used */
-const OBSOLETE_STATES = ['power'];
+/** States created by older versions that are no longer used (outTemp/elevation are not part of the TRONITY API) */
+const OBSOLETE_STATES = ['power', 'outTemp', 'elevation'];
 
 interface VehicleRecord {
     odometer?: number | null;
@@ -102,8 +84,6 @@ interface VehicleRecord {
     chargeRemainingTime?: number | null;
     plugged?: boolean | null;
     chargerPower?: number | null;
-    outTemp?: number | null;
-    elevation?: number | null;
     latitude?: number | null;
     longitude?: number | null;
     timestamp?: number | string | null;
@@ -136,9 +116,20 @@ function toEpochMs(value: unknown): number | null {
     return null;
 }
 
+/** Meaning of the HTTP status codes documented in the TRONITY Platform API */
+const HTTP_HINTS: Record<number, string> = {
+    400: 'credentials are not valid',
+    401: 'token or credentials are incorrect',
+    403: 'insufficient permissions - check the scopes of your app in the TRONITY Platform',
+    405: 'not supported by this vehicle',
+    409: 'vehicle may be unreachable',
+};
+
 function formatError(e: any): string {
     if (e?.response) {
-        return `HTTP ${e.response.status} on ${e.config?.url ?? 'unknown URL'}: ${JSON.stringify(e.response.data)}`;
+        const status = e.response.status;
+        const hint = HTTP_HINTS[status] ? ` (${HTTP_HINTS[status]})` : '';
+        return `HTTP ${status}${hint} on ${e.config?.url ?? 'unknown URL'}: ${JSON.stringify(e.response.data)}`;
     }
     return e?.message ?? String(e);
 }
@@ -151,7 +142,6 @@ class Tronity extends utils.Adapter {
     private pollTimer: ioBroker.Timeout | undefined = undefined;
     private unloading = false;
     private token: { value: string; expiresAt: number } | undefined = undefined;
-    private createdOptionalStates = new Set<string>();
 
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
@@ -183,11 +173,18 @@ class Tronity extends utils.Adapter {
                 native: {},
             });
             for (const def of STATES) {
-                if (def.optional) {
-                    await this.initOptionalState(def);
-                } else {
-                    await this.createStateObject(def);
-                }
+                await this.extendObjectAsync(def.id, {
+                    type: 'state',
+                    common: {
+                        name: def.name,
+                        type: def.type,
+                        role: def.role,
+                        read: true,
+                        write: def.write ?? false,
+                        ...(def.unit ? { unit: def.unit } : {}),
+                    },
+                    native: {},
+                });
             }
             for (const id of OBSOLETE_STATES) {
                 if (await this.getObjectAsync(id)) {
@@ -200,54 +197,6 @@ class Tronity extends utils.Adapter {
         } catch (e: any) {
             this.log.error(`Error during startup: ${formatError(e)}`);
         }
-    }
-
-    private async createStateObject(def: StateDefinition): Promise<void> {
-        await this.extendObjectAsync(def.id, {
-            type: 'state',
-            common: {
-                name: def.name,
-                type: def.type,
-                role: def.role,
-                read: true,
-                write: def.write ?? false,
-                ...(def.unit ? { unit: def.unit } : {}),
-            },
-            native: {},
-        });
-    }
-
-    /**
-     * Keeps an optional state that already has a value, removes it if it never received one.
-     *
-     * @param def definition of the optional state
-     */
-    private async initOptionalState(def: StateDefinition): Promise<void> {
-        if (!(await this.getObjectAsync(def.id))) {
-            return;
-        }
-        const state = await this.getStateAsync(def.id);
-        if (state?.val === null || state?.val === undefined) {
-            await this.delObjectAsync(def.id);
-            return;
-        }
-        await this.createStateObject(def);
-        this.createdOptionalStates.add(def.id);
-    }
-
-    /**
-     * Writes an optional state and creates its object on first use.
-     *
-     * @param id state ID
-     * @param value value delivered by the API
-     */
-    private async setOptionalState(id: string, value: ioBroker.StateValue): Promise<void> {
-        const def = STATES.find(d => d.id === id);
-        if (def && !this.createdOptionalStates.has(id)) {
-            await this.createStateObject(def);
-            this.createdOptionalStates.add(id);
-        }
-        await this.setState(id, value, true);
     }
 
     private getIntervalMs(): number {
@@ -362,12 +311,6 @@ class Tronity extends utils.Adapter {
         if (isNumber(status.longitude)) {
             await this.setState('longitude', status.longitude, true);
         }
-        if (isNumber(status.outTemp) && status.outTemp > -100) {
-            await this.setOptionalState('outTemp', status.outTemp);
-        }
-        if (isNumber(status.elevation) && status.elevation > -100) {
-            await this.setOptionalState('elevation', status.elevation);
-        }
         const timestamp = toEpochMs(status.timestamp);
         if (timestamp !== null) {
             await this.setState('timestamp', timestamp, true);
@@ -444,9 +387,10 @@ class Tronity extends utils.Adapter {
             this.sendTo(msg.from, msg.command, { result: 'ok', args: [String(vehicles.length)] }, msg.callback);
         } catch (e: any) {
             this.log.warn(`Login data check failed: ${formatError(e)}`);
-            const error = isUnauthorized(e)
-                ? 'Login failed. Please check client ID and client secret.'
-                : `Connection to TRONITY failed: ${e?.response ? `HTTP ${e.response.status}` : (e?.message ?? String(e))}`;
+            const error =
+                isUnauthorized(e) || e?.response?.status === 400
+                    ? 'Login failed. Please check client ID and client secret.'
+                    : `Connection to TRONITY failed: ${e?.response ? `HTTP ${e.response.status}` : (e?.message ?? String(e))}`;
             this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
     }

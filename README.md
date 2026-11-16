@@ -43,14 +43,15 @@ the adapter.
 - (IggePop) added request timeout, so a hanging request no longer stops polling
 - (IggePop) `command.Charging` is acknowledged after the command was accepted
 - (IggePop) access token is renewed on HTTP 401
-- (IggePop) value states are read-only and have proper roles and units; unused state `power` removed
+- (IggePop) value states are read-only and have proper roles and units
 - (IggePop) polling interval is configurable (default 60 s, minimum 30 s)
 - (IggePop) fixed vehicle selection: the vehicle list now uses the credentials entered in the form instead of the saved configuration
 - (IggePop) added button "Check Login Data" to test the credentials
 - (IggePop) improved error messages and warning for incomplete configuration
 - (IggePop) states have readable names (en/de), channel `command` is created
 - (IggePop) raw API response is logged at debug level
-- (IggePop) `outTemp` and `elevation` are only created once the API delivers a value; empty ones are removed
+- (IggePop) removed unused state `power` and states `outTemp` and `elevation`, which are not part of the TRONITY API
+- (IggePop) error messages explain the HTTP status codes documented by TRONITY (e.g. 403 missing scope, 409 vehicle unreachable)
 - (IggePop) removed dependency `memory-cache`
 - (IggePop) `admin/tronity.png` is now a real PNG file (was JPEG)
 

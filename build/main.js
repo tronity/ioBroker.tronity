@@ -75,22 +75,6 @@ const STATES = [
     unit: "\xB0"
   },
   {
-    id: "outTemp",
-    name: { en: "Outside temperature", de: "Au\xDFentemperatur" },
-    type: "number",
-    role: "value.temperature",
-    unit: "\xB0C",
-    optional: true
-  },
-  {
-    id: "elevation",
-    name: { en: "Elevation", de: "H\xF6he" },
-    type: "number",
-    role: "value.gps.elevation",
-    unit: "m",
-    optional: true
-  },
-  {
     id: "timestamp",
     name: { en: "Time of the record", de: "Zeitpunkt des Datensatzes" },
     type: "number",
@@ -98,7 +82,7 @@ const STATES = [
   },
   { id: "lastUpdate", name: { en: "Last update", de: "Letzte Aktualisierung" }, type: "number", role: "value.time" }
 ];
-const OBSOLETE_STATES = ["power"];
+const OBSOLETE_STATES = ["power", "outTemp", "elevation"];
 function isNumber(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
@@ -112,10 +96,19 @@ function toEpochMs(value) {
   }
   return null;
 }
+const HTTP_HINTS = {
+  400: "credentials are not valid",
+  401: "token or credentials are incorrect",
+  403: "insufficient permissions - check the scopes of your app in the TRONITY Platform",
+  405: "not supported by this vehicle",
+  409: "vehicle may be unreachable"
+};
 function formatError(e) {
   var _a, _b, _c;
   if (e == null ? void 0 : e.response) {
-    return `HTTP ${e.response.status} on ${(_b = (_a = e.config) == null ? void 0 : _a.url) != null ? _b : "unknown URL"}: ${JSON.stringify(e.response.data)}`;
+    const status = e.response.status;
+    const hint = HTTP_HINTS[status] ? ` (${HTTP_HINTS[status]})` : "";
+    return `HTTP ${status}${hint} on ${(_b = (_a = e.config) == null ? void 0 : _a.url) != null ? _b : "unknown URL"}: ${JSON.stringify(e.response.data)}`;
   }
   return (_c = e == null ? void 0 : e.message) != null ? _c : String(e);
 }
@@ -127,7 +120,6 @@ class Tronity extends utils.Adapter {
   pollTimer = void 0;
   unloading = false;
   token = void 0;
-  createdOptionalStates = /* @__PURE__ */ new Set();
   constructor(options = {}) {
     super({
       ...options,
@@ -139,6 +131,7 @@ class Tronity extends utils.Adapter {
     this.on("unload", this.onUnload.bind(this));
   }
   async onReady() {
+    var _a;
     try {
       await this.setConnected(false);
       const missing = ["client_id", "client_secret", "vehicle_id"].filter((key) => !this.config[key]);
@@ -154,11 +147,18 @@ class Tronity extends utils.Adapter {
         native: {}
       });
       for (const def of STATES) {
-        if (def.optional) {
-          await this.initOptionalState(def);
-        } else {
-          await this.createStateObject(def);
-        }
+        await this.extendObjectAsync(def.id, {
+          type: "state",
+          common: {
+            name: def.name,
+            type: def.type,
+            role: def.role,
+            read: true,
+            write: (_a = def.write) != null ? _a : false,
+            ...def.unit ? { unit: def.unit } : {}
+          },
+          native: {}
+        });
       }
       for (const id of OBSOLETE_STATES) {
         if (await this.getObjectAsync(id)) {
@@ -170,52 +170,6 @@ class Tronity extends utils.Adapter {
     } catch (e) {
       this.log.error(`Error during startup: ${formatError(e)}`);
     }
-  }
-  async createStateObject(def) {
-    var _a;
-    await this.extendObjectAsync(def.id, {
-      type: "state",
-      common: {
-        name: def.name,
-        type: def.type,
-        role: def.role,
-        read: true,
-        write: (_a = def.write) != null ? _a : false,
-        ...def.unit ? { unit: def.unit } : {}
-      },
-      native: {}
-    });
-  }
-  /**
-   * Keeps an optional state that already has a value, removes it if it never received one.
-   *
-   * @param def definition of the optional state
-   */
-  async initOptionalState(def) {
-    if (!await this.getObjectAsync(def.id)) {
-      return;
-    }
-    const state = await this.getStateAsync(def.id);
-    if ((state == null ? void 0 : state.val) === null || (state == null ? void 0 : state.val) === void 0) {
-      await this.delObjectAsync(def.id);
-      return;
-    }
-    await this.createStateObject(def);
-    this.createdOptionalStates.add(def.id);
-  }
-  /**
-   * Writes an optional state and creates its object on first use.
-   *
-   * @param id state ID
-   * @param value value delivered by the API
-   */
-  async setOptionalState(id, value) {
-    const def = STATES.find((d) => d.id === id);
-    if (def && !this.createdOptionalStates.has(id)) {
-      await this.createStateObject(def);
-      this.createdOptionalStates.add(id);
-    }
-    await this.setState(id, value, true);
   }
   getIntervalMs() {
     const configured = Number(this.config.interval);
@@ -318,12 +272,6 @@ class Tronity extends utils.Adapter {
     if (isNumber(status.longitude)) {
       await this.setState("longitude", status.longitude, true);
     }
-    if (isNumber(status.outTemp) && status.outTemp > -100) {
-      await this.setOptionalState("outTemp", status.outTemp);
-    }
-    if (isNumber(status.elevation) && status.elevation > -100) {
-      await this.setOptionalState("elevation", status.elevation);
-    }
     const timestamp = toEpochMs(status.timestamp);
     if (timestamp !== null) {
       await this.setState("timestamp", timestamp, true);
@@ -379,7 +327,7 @@ class Tronity extends utils.Adapter {
    * @param client_secret client secret entered in the form
    */
   async testConnection(msg, client_id, client_secret) {
-    var _a;
+    var _a, _b;
     if (!client_id || !client_secret) {
       this.sendTo(
         msg.from,
@@ -395,7 +343,7 @@ class Tronity extends utils.Adapter {
       this.sendTo(msg.from, msg.command, { result: "ok", args: [String(vehicles.length)] }, msg.callback);
     } catch (e) {
       this.log.warn(`Login data check failed: ${formatError(e)}`);
-      const error = isUnauthorized(e) ? "Login failed. Please check client ID and client secret." : `Connection to TRONITY failed: ${(e == null ? void 0 : e.response) ? `HTTP ${e.response.status}` : (_a = e == null ? void 0 : e.message) != null ? _a : String(e)}`;
+      const error = isUnauthorized(e) || ((_a = e == null ? void 0 : e.response) == null ? void 0 : _a.status) === 400 ? "Login failed. Please check client ID and client secret." : `Connection to TRONITY failed: ${(e == null ? void 0 : e.response) ? `HTTP ${e.response.status}` : (_b = e == null ? void 0 : e.message) != null ? _b : String(e)}`;
       this.sendTo(msg.from, msg.command, { error }, msg.callback);
     }
   }

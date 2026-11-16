@@ -15,7 +15,6 @@ class FakeAdapter {
     public setStateChangedAsync = jest.fn().mockResolvedValue(undefined);
     public extendObjectAsync = jest.fn().mockResolvedValue(undefined);
     public getObjectAsync = jest.fn().mockResolvedValue(null);
-    public getStateAsync = jest.fn().mockResolvedValue(null);
     public delObjectAsync = jest.fn().mockResolvedValue(undefined);
     public setTimeout = jest.fn().mockReturnValue('timer');
     public clearTimeout = jest.fn();
@@ -210,6 +209,21 @@ describe('Tronity adapter (Jest)', () => {
         expect(adapter.log.error).toHaveBeenCalledWith(expect.stringContaining('HTTP 500'));
     });
 
+    it('explains documented HTTP errors of the charging command', async () => {
+        const { adapter, axiosPost } = await loadAdapter();
+        adapter.config = { ...CONFIG };
+        axiosPost.mockResolvedValueOnce(TOKEN).mockRejectedValueOnce(httpError(409));
+
+        await adapter.onStateChange(`${adapter.namespace}.command.Charging`, {
+            val: true,
+            ack: false,
+        } as ioBroker.State);
+
+        expect(adapter.log.error).toHaveBeenCalledWith(
+            expect.stringContaining('HTTP 409 (vehicle may be unreachable)'),
+        );
+    });
+
     it('ignores acknowledged state changes', async () => {
         const { adapter, axiosPost } = await loadAdapter();
         adapter.config = { ...CONFIG };
@@ -247,6 +261,8 @@ describe('Tronity adapter (Jest)', () => {
         const command = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'command.Charging');
         expect(command[1].common.write).toBe(true);
         expect(adapter.delObjectAsync).toHaveBeenCalledWith('power');
+        expect(adapter.delObjectAsync).toHaveBeenCalledWith('outTemp');
+        expect(adapter.delObjectAsync).toHaveBeenCalledWith('elevation');
         expect(stateValue(adapter, 'level')).toBe(80);
         expect(stateValue(adapter, 'info.connection')).toBe(true);
         expect(adapter.setTimeout).toHaveBeenCalledWith(expect.any(Function), 60_000);
@@ -341,53 +357,6 @@ describe('Tronity adapter (Jest)', () => {
         expect(channel[1].type).toBe('channel');
         const level = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'level');
         expect(level[1].common.name).toMatchObject({ en: 'Battery level', de: 'Akkustand' });
-    });
-
-    it('does not create optional states without data', async () => {
-        const { adapter, axiosPost, axiosGet } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        axiosPost.mockResolvedValue(TOKEN);
-        axiosGet.mockResolvedValue({ data: { level: 50 } });
-
-        await adapter.onReady();
-
-        const created = adapter.extendObjectAsync.mock.calls.map(c => c[0]);
-        expect(created).not.toContain('outTemp');
-        expect(created).not.toContain('elevation');
-    });
-
-    it('creates an optional state when the API delivers a value', async () => {
-        const { adapter, axiosPost, axiosGet } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        axiosPost.mockResolvedValue(TOKEN);
-        axiosGet.mockResolvedValue({ data: { outTemp: 12.5 } });
-
-        await adapter.poll();
-        await adapter.poll();
-
-        const created = adapter.extendObjectAsync.mock.calls.filter(c => c[0] === 'outTemp');
-        expect(created).toHaveLength(1);
-        expect(created[0][1].common).toMatchObject({ role: 'value.temperature', unit: '°C' });
-        expect(stateValue(adapter, 'outTemp')).toBe(12.5);
-    });
-
-    it('removes existing optional states that never received a value', async () => {
-        const { adapter, axiosPost, axiosGet } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        adapter.getObjectAsync.mockImplementation((id: string) =>
-            Promise.resolve(id === 'outTemp' || id === 'elevation' ? { _id: id } : null),
-        );
-        adapter.getStateAsync.mockImplementation((id: string) =>
-            Promise.resolve(id === 'elevation' ? { val: 120, ack: true } : null),
-        );
-        axiosPost.mockResolvedValue(TOKEN);
-        axiosGet.mockResolvedValue({ data: {} });
-
-        await adapter.onReady();
-
-        expect(adapter.delObjectAsync).toHaveBeenCalledWith('outTemp');
-        expect(adapter.delObjectAsync).not.toHaveBeenCalledWith('elevation');
-        expect(adapter.extendObjectAsync.mock.calls.map(c => c[0])).toContain('elevation');
     });
 
     it('renews the token once on HTTP 401', async () => {
