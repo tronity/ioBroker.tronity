@@ -12,6 +12,7 @@ class FakeAdapter {
     public sendTo = jest.fn();
     public subscribeStates = jest.fn();
     public setState = jest.fn().mockResolvedValue(undefined);
+    public setStateChangedAsync = jest.fn().mockResolvedValue(undefined);
     public extendObjectAsync = jest.fn().mockResolvedValue(undefined);
     public getObjectAsync = jest.fn().mockResolvedValue(null);
     public delObjectAsync = jest.fn().mockResolvedValue(undefined);
@@ -58,7 +59,8 @@ async function loadAdapter(): Promise<LoadedAdapter> {
 }
 
 function stateValue(adapter: FakeAdapter, id: string): unknown {
-    const calls = adapter.setState.mock.calls.filter(c => c[0] === id);
+    const mock = id === 'info.connection' ? adapter.setStateChangedAsync : adapter.setState;
+    const calls = mock.mock.calls.filter(c => c[0] === id);
     return calls.length ? calls[calls.length - 1][1] : undefined;
 }
 
@@ -227,7 +229,7 @@ describe('Tronity adapter (Jest)', () => {
 
         expect(adapter.log.warn).toHaveBeenCalledWith(expect.stringContaining('client_secret, vehicle_id'));
         expect(axiosGet).not.toHaveBeenCalled();
-        expect(adapter.setState).toHaveBeenCalledWith('info.connection', false, true);
+        expect(adapter.setStateChangedAsync).toHaveBeenCalledWith('info.connection', false, true);
     });
 
     it('creates read-only value states, deletes obsolete ones and polls on start', async () => {
@@ -308,6 +310,36 @@ describe('Tronity adapter (Jest)', () => {
 
         expect(stateValue(adapter, 'info.connection')).toBe(false);
         expect(adapter.setTimeout).toHaveBeenCalledTimes(2);
+    });
+
+    it('writes info.connection on every successful poll (js-controller may reset it)', async () => {
+        const { adapter, axiosPost, axiosGet } = await loadAdapter();
+        adapter.config = { ...CONFIG };
+        axiosPost.mockResolvedValue(TOKEN);
+        axiosGet.mockResolvedValue({ data: {} });
+
+        await adapter.poll();
+        await adapter.poll();
+
+        const calls = adapter.setStateChangedAsync.mock.calls.filter(c => c[0] === 'info.connection');
+        expect(calls).toEqual([
+            ['info.connection', true, true],
+            ['info.connection', true, true],
+        ]);
+    });
+
+    it('creates the command channel and readable state names', async () => {
+        const { adapter, axiosPost, axiosGet } = await loadAdapter();
+        adapter.config = { ...CONFIG };
+        axiosPost.mockResolvedValue(TOKEN);
+        axiosGet.mockResolvedValue({ data: {} });
+
+        await adapter.onReady();
+
+        const channel = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'command');
+        expect(channel[1].type).toBe('channel');
+        const level = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'level');
+        expect(level[1].common.name).toMatchObject({ en: 'Battery level', de: 'Akkustand' });
     });
 
     it('renews the token once on HTTP 401', async () => {

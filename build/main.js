@@ -29,20 +29,66 @@ const DEFAULT_INTERVAL_S = 60;
 const MIN_INTERVAL_S = 30;
 const TOKEN_EXPIRY_MARGIN_MS = 12e4;
 const STATES = [
-  { id: "command.Charging", type: "boolean", role: "switch", write: true },
-  { id: "odometer", type: "number", role: "value.distance", unit: "km" },
-  { id: "range", type: "number", role: "value.distance", unit: "km" },
-  { id: "level", type: "number", role: "value.battery", unit: "%" },
-  { id: "charging", type: "string", role: "text" },
-  { id: "chargeRemainingTime", type: "number", role: "value" },
-  { id: "plugged", type: "boolean", role: "indicator" },
-  { id: "chargerPower", type: "number", role: "value.power", unit: "kW" },
-  { id: "latitude", type: "number", role: "value.gps.latitude", unit: "\xB0" },
-  { id: "longitude", type: "number", role: "value.gps.longitude", unit: "\xB0" },
-  { id: "outTemp", type: "number", role: "value.temperature", unit: "\xB0C" },
-  { id: "elevation", type: "number", role: "value.gps.elevation", unit: "m" },
-  { id: "timestamp", type: "number", role: "value.time" },
-  { id: "lastUpdate", type: "number", role: "value.time" }
+  {
+    id: "command.Charging",
+    name: { en: "Start/stop charging", de: "Laden starten/stoppen" },
+    type: "boolean",
+    role: "switch",
+    write: true
+  },
+  {
+    id: "odometer",
+    name: { en: "Odometer", de: "Kilometerstand" },
+    type: "number",
+    role: "value.distance",
+    unit: "km"
+  },
+  { id: "range", name: { en: "Range", de: "Reichweite" }, type: "number", role: "value.distance", unit: "km" },
+  { id: "level", name: { en: "Battery level", de: "Akkustand" }, type: "number", role: "value.battery", unit: "%" },
+  { id: "charging", name: { en: "Charging status", de: "Ladestatus" }, type: "string", role: "text" },
+  {
+    id: "chargeRemainingTime",
+    name: { en: "Remaining charging time", de: "Restladezeit" },
+    type: "number",
+    role: "value"
+  },
+  { id: "plugged", name: { en: "Plugged in", de: "Ladekabel eingesteckt" }, type: "boolean", role: "indicator" },
+  {
+    id: "chargerPower",
+    name: { en: "Charging power", de: "Ladeleistung" },
+    type: "number",
+    role: "value.power",
+    unit: "kW"
+  },
+  {
+    id: "latitude",
+    name: { en: "Latitude", de: "Breitengrad" },
+    type: "number",
+    role: "value.gps.latitude",
+    unit: "\xB0"
+  },
+  {
+    id: "longitude",
+    name: { en: "Longitude", de: "L\xE4ngengrad" },
+    type: "number",
+    role: "value.gps.longitude",
+    unit: "\xB0"
+  },
+  {
+    id: "outTemp",
+    name: { en: "Outside temperature", de: "Au\xDFentemperatur" },
+    type: "number",
+    role: "value.temperature",
+    unit: "\xB0C"
+  },
+  { id: "elevation", name: { en: "Elevation", de: "H\xF6he" }, type: "number", role: "value.gps.elevation", unit: "m" },
+  {
+    id: "timestamp",
+    name: { en: "Time of the record", de: "Zeitpunkt des Datensatzes" },
+    type: "number",
+    role: "value.time"
+  },
+  { id: "lastUpdate", name: { en: "Last update", de: "Letzte Aktualisierung" }, type: "number", role: "value.time" }
 ];
 const OBSOLETE_STATES = ["power"];
 function isNumber(value) {
@@ -73,7 +119,6 @@ class Tronity extends utils.Adapter {
   pollTimer = void 0;
   unloading = false;
   token = void 0;
-  lastConnectionState = void 0;
   constructor(options = {}) {
     super({
       ...options,
@@ -95,11 +140,16 @@ class Tronity extends utils.Adapter {
         );
         return;
       }
+      await this.extendObjectAsync("command", {
+        type: "channel",
+        common: { name: { en: "Commands", de: "Befehle" } },
+        native: {}
+      });
       for (const def of STATES) {
         await this.extendObjectAsync(def.id, {
           type: "state",
           common: {
-            name: def.id,
+            name: def.name,
             type: def.type,
             role: def.role,
             read: true,
@@ -126,10 +176,7 @@ class Tronity extends utils.Adapter {
     return Math.max(seconds, MIN_INTERVAL_S) * 1e3;
   }
   async setConnected(connected) {
-    if (this.lastConnectionState !== connected) {
-      this.lastConnectionState = connected;
-      await this.setState("info.connection", connected, true);
-    }
+    await this.setStateChangedAsync("info.connection", connected, true);
   }
   async requestToken(client_id, client_secret) {
     const response = await import_axios.default.post(
@@ -190,6 +237,7 @@ class Tronity extends utils.Adapter {
       });
       return response.data;
     });
+    this.log.debug(`last_record: ${JSON.stringify(status)}`);
     if (isNumber(status.odometer) && status.odometer >= 0) {
       await this.setState("odometer", status.odometer, true);
     }
