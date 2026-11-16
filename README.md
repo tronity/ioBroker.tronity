@@ -47,6 +47,7 @@ the adapter.
 - (IggePop) polling interval is configurable (default 60 s, minimum 30 s)
 - (IggePop) improved error messages and warning for incomplete configuration
 - (IggePop) removed dependency `memory-cache`
+- (IggePop) `admin/tronity.png` is now a real PNG file (was JPEG)
 
 ### 1.2.2 (2026-06-12)
 
