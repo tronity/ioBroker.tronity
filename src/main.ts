@@ -16,6 +16,8 @@ interface StateDefinition {
     role: string;
     unit?: string;
     write?: boolean;
+    /** Only created once the API delivers a value (not every vehicle/endpoint provides it) */
+    optional?: boolean;
 }
 
 const STATES: StateDefinition[] = [
@@ -70,8 +72,16 @@ const STATES: StateDefinition[] = [
         type: 'number',
         role: 'value.temperature',
         unit: '°C',
+        optional: true,
     },
-    { id: 'elevation', name: { en: 'Elevation', de: 'Höhe' }, type: 'number', role: 'value.gps.elevation', unit: 'm' },
+    {
+        id: 'elevation',
+        name: { en: 'Elevation', de: 'Höhe' },
+        type: 'number',
+        role: 'value.gps.elevation',
+        unit: 'm',
+        optional: true,
+    },
     {
         id: 'timestamp',
         name: { en: 'Time of the record', de: 'Zeitpunkt des Datensatzes' },
@@ -141,6 +151,7 @@ class Tronity extends utils.Adapter {
     private pollTimer: ioBroker.Timeout | undefined = undefined;
     private unloading = false;
     private token: { value: string; expiresAt: number } | undefined = undefined;
+    private createdOptionalStates = new Set<string>();
 
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
@@ -172,18 +183,11 @@ class Tronity extends utils.Adapter {
                 native: {},
             });
             for (const def of STATES) {
-                await this.extendObjectAsync(def.id, {
-                    type: 'state',
-                    common: {
-                        name: def.name,
-                        type: def.type,
-                        role: def.role,
-                        read: true,
-                        write: def.write ?? false,
-                        ...(def.unit ? { unit: def.unit } : {}),
-                    },
-                    native: {},
-                });
+                if (def.optional) {
+                    await this.initOptionalState(def);
+                } else {
+                    await this.createStateObject(def);
+                }
             }
             for (const id of OBSOLETE_STATES) {
                 if (await this.getObjectAsync(id)) {
@@ -196,6 +200,54 @@ class Tronity extends utils.Adapter {
         } catch (e: any) {
             this.log.error(`Error during startup: ${formatError(e)}`);
         }
+    }
+
+    private async createStateObject(def: StateDefinition): Promise<void> {
+        await this.extendObjectAsync(def.id, {
+            type: 'state',
+            common: {
+                name: def.name,
+                type: def.type,
+                role: def.role,
+                read: true,
+                write: def.write ?? false,
+                ...(def.unit ? { unit: def.unit } : {}),
+            },
+            native: {},
+        });
+    }
+
+    /**
+     * Keeps an optional state that already has a value, removes it if it never received one.
+     *
+     * @param def definition of the optional state
+     */
+    private async initOptionalState(def: StateDefinition): Promise<void> {
+        if (!(await this.getObjectAsync(def.id))) {
+            return;
+        }
+        const state = await this.getStateAsync(def.id);
+        if (state?.val === null || state?.val === undefined) {
+            await this.delObjectAsync(def.id);
+            return;
+        }
+        await this.createStateObject(def);
+        this.createdOptionalStates.add(def.id);
+    }
+
+    /**
+     * Writes an optional state and creates its object on first use.
+     *
+     * @param id state ID
+     * @param value value delivered by the API
+     */
+    private async setOptionalState(id: string, value: ioBroker.StateValue): Promise<void> {
+        const def = STATES.find(d => d.id === id);
+        if (def && !this.createdOptionalStates.has(id)) {
+            await this.createStateObject(def);
+            this.createdOptionalStates.add(id);
+        }
+        await this.setState(id, value, true);
     }
 
     private getIntervalMs(): number {
@@ -311,10 +363,10 @@ class Tronity extends utils.Adapter {
             await this.setState('longitude', status.longitude, true);
         }
         if (isNumber(status.outTemp) && status.outTemp > -100) {
-            await this.setState('outTemp', status.outTemp, true);
+            await this.setOptionalState('outTemp', status.outTemp);
         }
         if (isNumber(status.elevation) && status.elevation > -100) {
-            await this.setState('elevation', status.elevation, true);
+            await this.setOptionalState('elevation', status.elevation);
         }
         const timestamp = toEpochMs(status.timestamp);
         if (timestamp !== null) {

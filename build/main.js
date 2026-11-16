@@ -79,9 +79,17 @@ const STATES = [
     name: { en: "Outside temperature", de: "Au\xDFentemperatur" },
     type: "number",
     role: "value.temperature",
-    unit: "\xB0C"
+    unit: "\xB0C",
+    optional: true
   },
-  { id: "elevation", name: { en: "Elevation", de: "H\xF6he" }, type: "number", role: "value.gps.elevation", unit: "m" },
+  {
+    id: "elevation",
+    name: { en: "Elevation", de: "H\xF6he" },
+    type: "number",
+    role: "value.gps.elevation",
+    unit: "m",
+    optional: true
+  },
   {
     id: "timestamp",
     name: { en: "Time of the record", de: "Zeitpunkt des Datensatzes" },
@@ -119,6 +127,7 @@ class Tronity extends utils.Adapter {
   pollTimer = void 0;
   unloading = false;
   token = void 0;
+  createdOptionalStates = /* @__PURE__ */ new Set();
   constructor(options = {}) {
     super({
       ...options,
@@ -130,7 +139,6 @@ class Tronity extends utils.Adapter {
     this.on("unload", this.onUnload.bind(this));
   }
   async onReady() {
-    var _a;
     try {
       await this.setConnected(false);
       const missing = ["client_id", "client_secret", "vehicle_id"].filter((key) => !this.config[key]);
@@ -146,18 +154,11 @@ class Tronity extends utils.Adapter {
         native: {}
       });
       for (const def of STATES) {
-        await this.extendObjectAsync(def.id, {
-          type: "state",
-          common: {
-            name: def.name,
-            type: def.type,
-            role: def.role,
-            read: true,
-            write: (_a = def.write) != null ? _a : false,
-            ...def.unit ? { unit: def.unit } : {}
-          },
-          native: {}
-        });
+        if (def.optional) {
+          await this.initOptionalState(def);
+        } else {
+          await this.createStateObject(def);
+        }
       }
       for (const id of OBSOLETE_STATES) {
         if (await this.getObjectAsync(id)) {
@@ -169,6 +170,52 @@ class Tronity extends utils.Adapter {
     } catch (e) {
       this.log.error(`Error during startup: ${formatError(e)}`);
     }
+  }
+  async createStateObject(def) {
+    var _a;
+    await this.extendObjectAsync(def.id, {
+      type: "state",
+      common: {
+        name: def.name,
+        type: def.type,
+        role: def.role,
+        read: true,
+        write: (_a = def.write) != null ? _a : false,
+        ...def.unit ? { unit: def.unit } : {}
+      },
+      native: {}
+    });
+  }
+  /**
+   * Keeps an optional state that already has a value, removes it if it never received one.
+   *
+   * @param def definition of the optional state
+   */
+  async initOptionalState(def) {
+    if (!await this.getObjectAsync(def.id)) {
+      return;
+    }
+    const state = await this.getStateAsync(def.id);
+    if ((state == null ? void 0 : state.val) === null || (state == null ? void 0 : state.val) === void 0) {
+      await this.delObjectAsync(def.id);
+      return;
+    }
+    await this.createStateObject(def);
+    this.createdOptionalStates.add(def.id);
+  }
+  /**
+   * Writes an optional state and creates its object on first use.
+   *
+   * @param id state ID
+   * @param value value delivered by the API
+   */
+  async setOptionalState(id, value) {
+    const def = STATES.find((d) => d.id === id);
+    if (def && !this.createdOptionalStates.has(id)) {
+      await this.createStateObject(def);
+      this.createdOptionalStates.add(id);
+    }
+    await this.setState(id, value, true);
   }
   getIntervalMs() {
     const configured = Number(this.config.interval);
@@ -272,10 +319,10 @@ class Tronity extends utils.Adapter {
       await this.setState("longitude", status.longitude, true);
     }
     if (isNumber(status.outTemp) && status.outTemp > -100) {
-      await this.setState("outTemp", status.outTemp, true);
+      await this.setOptionalState("outTemp", status.outTemp);
     }
     if (isNumber(status.elevation) && status.elevation > -100) {
-      await this.setState("elevation", status.elevation, true);
+      await this.setOptionalState("elevation", status.elevation);
     }
     const timestamp = toEpochMs(status.timestamp);
     if (timestamp !== null) {

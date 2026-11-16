@@ -50,6 +50,7 @@ the adapter.
 - (IggePop) improved error messages and warning for incomplete configuration
 - (IggePop) states have readable names (en/de), channel `command` is created
 - (IggePop) raw API response is logged at debug level
+- (IggePop) `outTemp` and `elevation` are only created once the API delivers a value; empty ones are removed
 - (IggePop) removed dependency `memory-cache`
 - (IggePop) `admin/tronity.png` is now a real PNG file (was JPEG)
 
