@@ -41,7 +41,7 @@ the adapter.
 - (IggePop) fixed charger power and remaining charge time keeping their last value after charging ended
 - (IggePop) `info.connection` now reflects whether the TRONITY API can actually be reached
 - (IggePop) added request timeout, so a hanging request no longer stops polling
-- (IggePop) `command.Charging` is acknowledged after the command was accepted and reflects the real charging state (`charging === "Charging"`)
+- (IggePop) removed charging control (`command.Charging`), it is no longer supported by the TRONITY API; the charging status is still available in `charging`
 - (IggePop) `chargeRemainingTime` has unit seconds
 - (IggePop) access token is renewed on HTTP 401
 - (IggePop) value states are read-only and have proper roles and units
@@ -49,10 +49,10 @@ the adapter.
 - (IggePop) fixed vehicle selection: the vehicle list now uses the credentials entered in the form instead of the saved configuration
 - (IggePop) added button "Check Login Data" to test the credentials
 - (IggePop) improved error messages and warning for incomplete configuration
-- (IggePop) states have readable names (en/de), channel `command` is created
+- (IggePop) states have readable names (en/de)
 - (IggePop) raw API response is logged at debug level
 - (IggePop) removed unused state `power` and states `outTemp` and `elevation`, which are not part of the TRONITY API
-- (IggePop) error messages explain the HTTP status codes documented by TRONITY (e.g. 403 missing scope, 409 vehicle unreachable)
+- (IggePop) error messages explain the HTTP status codes documented by TRONITY (e.g. 403 missing scope)
 - (IggePop) removed dependency `memory-cache`
 - (IggePop) `admin/tronity.png` is now a real PNG file (was JPEG)
 

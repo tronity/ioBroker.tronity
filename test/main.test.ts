@@ -10,7 +10,6 @@ class FakeAdapter {
 
     public on = jest.fn();
     public sendTo = jest.fn();
-    public subscribeStates = jest.fn();
     public setState = jest.fn().mockResolvedValue(undefined);
     public setStateChangedAsync = jest.fn().mockResolvedValue(undefined);
     public extendObjectAsync = jest.fn().mockResolvedValue(undefined);
@@ -27,7 +26,6 @@ class FakeAdapter {
 type Internals = {
     onReady: () => Promise<void>;
     onMessage: (msg: unknown) => Promise<void>;
-    onStateChange: (id: string, state: ioBroker.State) => Promise<void>;
     onUnload: (cb: () => void) => void;
     poll: () => Promise<void>;
 };
@@ -59,8 +57,7 @@ async function loadAdapter(): Promise<LoadedAdapter> {
 }
 
 function stateValue(adapter: FakeAdapter, id: string): unknown {
-    const mock =
-        id === 'info.connection' || id === 'command.Charging' ? adapter.setStateChangedAsync : adapter.setState;
+    const mock = id === 'info.connection' ? adapter.setStateChangedAsync : adapter.setState;
     const calls = mock.mock.calls.filter(c => c[0] === id);
     return calls.length ? calls[calls.length - 1][1] : undefined;
 }
@@ -168,75 +165,6 @@ describe('Tronity adapter (Jest)', () => {
         expect(adapter.sendTo.mock.calls[0][2]).toEqual({ error: 'Please enter client ID and client secret first.' });
     });
 
-    it('starts charging and acknowledges the command', async () => {
-        const { adapter, axiosPost } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        axiosPost.mockResolvedValueOnce(TOKEN).mockResolvedValueOnce({ data: {} });
-
-        await adapter.onStateChange(`${adapter.namespace}.command.Charging`, {
-            val: true,
-            ack: false,
-        } as ioBroker.State);
-
-        expect(String(axiosPost.mock.calls[1][0])).toContain('/control/start_charging');
-        expect(adapter.setState).toHaveBeenCalledWith('command.Charging', true, true);
-    });
-
-    it('stops charging and acknowledges the command', async () => {
-        const { adapter, axiosPost } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        axiosPost.mockResolvedValueOnce(TOKEN).mockResolvedValueOnce({ data: {} });
-
-        await adapter.onStateChange(`${adapter.namespace}.command.Charging`, {
-            val: false,
-            ack: false,
-        } as ioBroker.State);
-
-        expect(String(axiosPost.mock.calls[1][0])).toContain('/control/stop_charging');
-        expect(adapter.setState).toHaveBeenCalledWith('command.Charging', false, true);
-    });
-
-    it('does not acknowledge the command when the request fails', async () => {
-        const { adapter, axiosPost } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        axiosPost.mockResolvedValueOnce(TOKEN).mockRejectedValueOnce(httpError(500));
-
-        await adapter.onStateChange(`${adapter.namespace}.command.Charging`, {
-            val: true,
-            ack: false,
-        } as ioBroker.State);
-
-        expect(adapter.setState).not.toHaveBeenCalledWith('command.Charging', true, true);
-        expect(adapter.log.error).toHaveBeenCalledWith(expect.stringContaining('HTTP 500'));
-    });
-
-    it('explains documented HTTP errors of the charging command', async () => {
-        const { adapter, axiosPost } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        axiosPost.mockResolvedValueOnce(TOKEN).mockRejectedValueOnce(httpError(409));
-
-        await adapter.onStateChange(`${adapter.namespace}.command.Charging`, {
-            val: true,
-            ack: false,
-        } as ioBroker.State);
-
-        expect(adapter.log.error).toHaveBeenCalledWith(
-            expect.stringContaining('HTTP 409 (vehicle may be unreachable)'),
-        );
-    });
-
-    it('ignores acknowledged state changes', async () => {
-        const { adapter, axiosPost } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-
-        await adapter.onStateChange(`${adapter.namespace}.command.Charging`, {
-            val: true,
-            ack: true,
-        } as ioBroker.State);
-
-        expect(axiosPost).not.toHaveBeenCalled();
-    });
-
     it('warns and does not poll when configuration is incomplete', async () => {
         const { adapter, axiosGet } = await loadAdapter();
         adapter.config = { client_id: 'client-id' };
@@ -259,11 +187,12 @@ describe('Tronity adapter (Jest)', () => {
 
         const odometer = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'odometer');
         expect(odometer[1].common).toMatchObject({ write: false, role: 'value.distance', unit: 'km' });
-        const command = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'command.Charging');
-        expect(command[1].common.write).toBe(true);
+        expect(adapter.extendObjectAsync.mock.calls.every(c => c[1].common.write === false)).toBe(true);
         expect(adapter.delObjectAsync).toHaveBeenCalledWith('power');
         expect(adapter.delObjectAsync).toHaveBeenCalledWith('outTemp');
         expect(adapter.delObjectAsync).toHaveBeenCalledWith('elevation');
+        expect(adapter.delObjectAsync).toHaveBeenCalledWith('command.Charging');
+        expect(adapter.delObjectAsync).toHaveBeenCalledWith('command');
         expect(stateValue(adapter, 'level')).toBe(80);
         expect(stateValue(adapter, 'info.connection')).toBe(true);
         expect(adapter.setTimeout).toHaveBeenCalledWith(expect.any(Function), 60_000);
@@ -284,7 +213,7 @@ describe('Tronity adapter (Jest)', () => {
         expect(stateValue(adapter, 'plugged')).toBe(false);
     });
 
-    it('reports charging state and remaining time while charging', async () => {
+    it('reports charging status and remaining time while charging', async () => {
         const { adapter, axiosPost, axiosGet } = await loadAdapter();
         adapter.config = { ...CONFIG };
         axiosPost.mockResolvedValue(TOKEN);
@@ -295,19 +224,8 @@ describe('Tronity adapter (Jest)', () => {
 
         await adapter.poll();
 
-        expect(stateValue(adapter, 'command.Charging')).toBe(true);
+        expect(stateValue(adapter, 'charging')).toBe('Charging');
         expect(stateValue(adapter, 'chargeRemainingTime')).toBe(34800);
-    });
-
-    it('reports not charging when charging is complete', async () => {
-        const { adapter, axiosPost, axiosGet } = await loadAdapter();
-        adapter.config = { ...CONFIG };
-        axiosPost.mockResolvedValue(TOKEN);
-        axiosGet.mockResolvedValue({ data: { charging: 'Complete', plugged: true } });
-
-        await adapter.poll();
-
-        expect(stateValue(adapter, 'command.Charging')).toBe(false);
     });
 
     it('writes zero charger power while plugged in', async () => {
@@ -372,7 +290,7 @@ describe('Tronity adapter (Jest)', () => {
         ]);
     });
 
-    it('creates the command channel and readable state names', async () => {
+    it('creates readable state names', async () => {
         const { adapter, axiosPost, axiosGet } = await loadAdapter();
         adapter.config = { ...CONFIG };
         axiosPost.mockResolvedValue(TOKEN);
@@ -380,8 +298,6 @@ describe('Tronity adapter (Jest)', () => {
 
         await adapter.onReady();
 
-        const channel = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'command');
-        expect(channel[1].type).toBe('channel');
         const level = adapter.extendObjectAsync.mock.calls.find(c => c[0] === 'level');
         expect(level[1].common.name).toMatchObject({ en: 'Battery level', de: 'Akkustand' });
     });

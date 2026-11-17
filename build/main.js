@@ -30,13 +30,6 @@ const MIN_INTERVAL_S = 30;
 const TOKEN_EXPIRY_MARGIN_MS = 12e4;
 const STATES = [
   {
-    id: "command.Charging",
-    name: { en: "Start/stop charging", de: "Laden starten/stoppen" },
-    type: "boolean",
-    role: "switch",
-    write: true
-  },
-  {
     id: "odometer",
     name: { en: "Odometer", de: "Kilometerstand" },
     type: "number",
@@ -83,7 +76,7 @@ const STATES = [
   },
   { id: "lastUpdate", name: { en: "Last update", de: "Letzte Aktualisierung" }, type: "number", role: "value.time" }
 ];
-const OBSOLETE_STATES = ["power", "outTemp", "elevation"];
+const OBSOLETE_STATES = ["power", "outTemp", "elevation", "command.Charging", "command"];
 function isNumber(value) {
   return typeof value === "number" && Number.isFinite(value);
 }
@@ -100,9 +93,7 @@ function toEpochMs(value) {
 const HTTP_HINTS = {
   400: "credentials are not valid",
   401: "token or credentials are incorrect",
-  403: "insufficient permissions - check the scopes of your app in the TRONITY Platform",
-  405: "not supported by this vehicle",
-  409: "vehicle may be unreachable"
+  403: "insufficient permissions - check the scopes of your app in the TRONITY Platform"
 };
 function formatError(e) {
   var _a, _b, _c;
@@ -127,12 +118,10 @@ class Tronity extends utils.Adapter {
       name: "tronity"
     });
     this.on("ready", this.onReady.bind(this));
-    this.on("stateChange", this.onStateChange.bind(this));
     this.on("message", this.onMessage.bind(this));
     this.on("unload", this.onUnload.bind(this));
   }
   async onReady() {
-    var _a;
     try {
       await this.setConnected(false);
       const missing = ["client_id", "client_secret", "vehicle_id"].filter((key) => !this.config[key]);
@@ -142,11 +131,6 @@ class Tronity extends utils.Adapter {
         );
         return;
       }
-      await this.extendObjectAsync("command", {
-        type: "channel",
-        common: { name: { en: "Commands", de: "Befehle" } },
-        native: {}
-      });
       for (const def of STATES) {
         await this.extendObjectAsync(def.id, {
           type: "state",
@@ -155,7 +139,7 @@ class Tronity extends utils.Adapter {
             type: def.type,
             role: def.role,
             read: true,
-            write: (_a = def.write) != null ? _a : false,
+            write: false,
             ...def.unit ? { unit: def.unit } : {}
           },
           native: {}
@@ -166,7 +150,6 @@ class Tronity extends utils.Adapter {
           await this.delObjectAsync(id);
         }
       }
-      this.subscribeStates("command.*");
       await this.poll();
     } catch (e) {
       this.log.error(`Error during startup: ${formatError(e)}`);
@@ -251,7 +234,6 @@ class Tronity extends utils.Adapter {
     }
     if (typeof status.charging === "string" && status.charging.length > 0) {
       await this.setState("charging", status.charging, true);
-      await this.setStateChangedAsync("command.Charging", status.charging === "Charging", true);
     }
     if (typeof status.plugged === "boolean") {
       await this.setState("plugged", status.plugged, true);
@@ -358,31 +340,6 @@ class Tronity extends utils.Adapter {
       }
     } finally {
       callback();
-    }
-  }
-  async onStateChange(id, state) {
-    if (!state || state.ack) {
-      return;
-    }
-    this.log.debug(`State Change: ${id} to ${state.val} ack ${state.ack}`);
-    const localId = id.substring(this.namespace.length + 1);
-    if (localId !== "command.Charging" || !this.config.vehicle_id) {
-      return;
-    }
-    const start = !!state.val;
-    const action = start ? "start_charging" : "stop_charging";
-    try {
-      await this.withToken(
-        (token) => import_axios.default.post(
-          `${API_URL}/tronity/vehicles/${this.config.vehicle_id}/control/${action}`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` }, timeout: REQUEST_TIMEOUT_MS }
-        )
-      );
-      this.log.info(start ? "Charging start requested" : "Charging stop requested");
-      await this.setState("command.Charging", start, true);
-    } catch (e) {
-      this.log.error(`Could not ${start ? "start" : "stop"} charging: ${formatError(e)}`);
     }
   }
 }
