@@ -5,5 +5,10 @@
     "Select your Car": "Seleziona la tua auto",
     "Client ID": "ID client",
     "Client Secret": "Segreto client",
-    "Vehicle": "Veicolo"
+    "Vehicle": "Veicolo",
+    "Polling interval (seconds)": "Intervallo di interrogazione (secondi)",
+    "Connection successful. %s vehicle(s) found.": "Connessione riuscita. %s veicolo/i trovato/i.",
+    "Login failed. Please check client ID and client secret.": "Accesso non riuscito. Controlla Client ID e Client Secret.",
+    "Please enter client ID and client secret first.": "Inserisci prima Client ID e Client Secret.",
+    "Vehicle list is loaded with the client ID and secret entered above.": "L'elenco dei veicoli viene caricato con Client ID e Secret inseriti sopra."
 }

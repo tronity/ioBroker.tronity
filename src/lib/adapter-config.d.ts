@@ -7,6 +7,7 @@ declare global {
 			client_id: string;
 			client_secret: string;
 			vehicle_id: string;
+			interval: number;
 		}
 	}
 }

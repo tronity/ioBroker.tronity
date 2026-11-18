@@ -5,5 +5,10 @@
     "Select your Car": "Oberit svii avtomobil",
     "Client ID": "ID kliienta",
     "Client Secret": "Sekret kliienta",
-    "Vehicle": "Transportnyi zasib"
+    "Vehicle": "Transportnyi zasib",
+    "Polling interval (seconds)": "Інтервал опитування (секунди)",
+    "Connection successful. %s vehicle(s) found.": "З'єднання успішне. Знайдено автомобілів: %s.",
+    "Login failed. Please check client ID and client secret.": "Помилка входу. Перевірте Client ID та Client Secret.",
+    "Please enter client ID and client secret first.": "Спочатку введіть Client ID та Client Secret.",
+    "Vehicle list is loaded with the client ID and secret entered above.": "Список автомобілів завантажується з указаними вище Client ID та Secret."
 }

@@ -1,10 +1,141 @@
 import * as utils from '@iobroker/adapter-core';
 import axios from 'axios';
-import * as cache from 'memory-cache';
+
+const API_URL = 'https://api.tronity.tech';
+/** Abort HTTP requests that hang, otherwise polling would stop forever */
+const REQUEST_TIMEOUT_MS = 30_000;
+const DEFAULT_INTERVAL_S = 60;
+const MIN_INTERVAL_S = 30;
+/** Refresh the access token this long before it expires */
+const TOKEN_EXPIRY_MARGIN_MS = 120_000;
+
+interface StateDefinition {
+    id: string;
+    name: ioBroker.StringOrTranslated;
+    type: ioBroker.CommonType;
+    role: string;
+    unit?: string;
+}
+
+const STATES: StateDefinition[] = [
+    {
+        id: 'odometer',
+        name: { en: 'Odometer', de: 'Kilometerstand' },
+        type: 'number',
+        role: 'value.distance',
+        unit: 'km',
+    },
+    { id: 'range', name: { en: 'Range', de: 'Reichweite' }, type: 'number', role: 'value.distance', unit: 'km' },
+    { id: 'level', name: { en: 'Battery level', de: 'Akkustand' }, type: 'number', role: 'value.battery', unit: '%' },
+    { id: 'charging', name: { en: 'Charging status', de: 'Ladestatus' }, type: 'string', role: 'text' },
+    {
+        id: 'chargeRemainingTime',
+        name: { en: 'Remaining charging time', de: 'Restladezeit' },
+        type: 'number',
+        role: 'value.interval',
+        unit: 's',
+    },
+    { id: 'plugged', name: { en: 'Plugged in', de: 'Ladekabel eingesteckt' }, type: 'boolean', role: 'indicator' },
+    {
+        id: 'chargerPower',
+        name: { en: 'Charging power', de: 'Ladeleistung' },
+        type: 'number',
+        role: 'value.power',
+        unit: 'kW',
+    },
+    {
+        id: 'latitude',
+        name: { en: 'Latitude', de: 'Breitengrad' },
+        type: 'number',
+        role: 'value.gps.latitude',
+        unit: '°',
+    },
+    {
+        id: 'longitude',
+        name: { en: 'Longitude', de: 'Längengrad' },
+        type: 'number',
+        role: 'value.gps.longitude',
+        unit: '°',
+    },
+    {
+        id: 'timestamp',
+        name: { en: 'Time of the record', de: 'Zeitpunkt des Datensatzes' },
+        type: 'number',
+        role: 'value.time',
+    },
+    { id: 'lastUpdate', name: { en: 'Last update', de: 'Letzte Aktualisierung' }, type: 'number', role: 'value.time' },
+];
+
+/**
+ * Objects created by older versions that are no longer used: outTemp/elevation are not part of the TRONITY API,
+ * charging control (command.Charging) is no longer supported by TRONITY.
+ */
+const OBSOLETE_STATES = ['power', 'outTemp', 'elevation', 'command.Charging', 'command'];
+
+interface VehicleRecord {
+    odometer?: number | null;
+    range?: number | null;
+    level?: number | null;
+    charging?: string | null;
+    chargeRemainingTime?: number | null;
+    plugged?: boolean | null;
+    chargerPower?: number | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    timestamp?: number | string | null;
+    lastUpdate?: number | string | null;
+}
+
+interface Vehicle {
+    id: string;
+    displayName: string;
+    manufacture: string;
+}
+
+interface TokenResponse {
+    access_token: string;
+    expires_in: number;
+}
+
+function isNumber(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value);
+}
+
+function toEpochMs(value: unknown): number | null {
+    if (isNumber(value)) {
+        return value;
+    }
+    if (typeof value === 'string' && value.length > 0) {
+        const ms = new Date(value).getTime();
+        return Number.isNaN(ms) ? null : ms;
+    }
+    return null;
+}
+
+/** Meaning of the HTTP status codes documented in the TRONITY Platform API */
+const HTTP_HINTS: Record<number, string> = {
+    400: 'credentials are not valid',
+    401: 'token or credentials are incorrect',
+    403: 'insufficient permissions - check the scopes of your app in the TRONITY Platform',
+};
+
+function formatError(e: any): string {
+    if (e?.response) {
+        const status = e.response.status;
+        const hint = HTTP_HINTS[status] ? ` (${HTTP_HINTS[status]})` : '';
+        return `HTTP ${status}${hint} on ${e.config?.url ?? 'unknown URL'}: ${JSON.stringify(e.response.data)}`;
+    }
+    return e?.message ?? String(e);
+}
+
+function isUnauthorized(e: any): boolean {
+    return e?.response?.status === 401;
+}
 
 class Tronity extends utils.Adapter {
-    private timeout: any = null;
-    private URL = 'https://api.tronity.tech';
+    private pollTimer: ioBroker.Timeout | undefined = undefined;
+    private unloading = false;
+    private token: { value: string; expiresAt: number } | undefined = undefined;
 
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
@@ -12,259 +143,254 @@ class Tronity extends utils.Adapter {
             name: 'tronity',
         });
         this.on('ready', this.onReady.bind(this));
-        this.on('stateChange', this.onStateChange.bind(this));
         this.on('message', this.onMessage.bind(this));
         this.on('unload', this.onUnload.bind(this));
     }
 
     private async onReady(): Promise<void> {
-        this.log.debug('Starting');
-        this.subscribeStates('command.*');
-        await this.setStateAsync('info.connection', false, true);
-        if (this.config.client_id && this.config.client_secret && this.config.vehicle_id) {
-            await this.setStateAsync('info.connection', true, true);
-            await this.initSetObject('command.Charging', 'boolean', 'switch');
-            await this.initSetObject('odometer', 'number', 'level');
-            await this.initSetObject('range', 'number', 'level');
-            await this.initSetObject('level', 'number', 'level');
-            await this.initSetObject('charging', 'string', 'text');
-            await this.initSetObject('power', 'number', 'level');
-            await this.initSetObject('chargeRemainingTime', 'number', 'value.time');
-            await this.initSetObject('plugged', 'boolean', 'switch');
-            await this.initSetObject('chargerPower', 'number', 'level');
-            await this.initSetObject('latitude', 'number', 'value.gps.latitude');
-            await this.initSetObject('longitude', 'number', 'value.gps.longitude');
-            await this.initSetObject('outTemp', 'number', 'level');
-            await this.initSetObject('elevation', 'number', 'level');
-            await this.initSetObject('timestamp', 'number', 'value.time');
-            await this.initSetObject('lastUpdate', 'number', 'value.time');
+        try {
+            await this.setConnected(false);
 
-            await this.setStateAsync('info.connection', true, true);
-            await this.setStateAsync('command.Charging', false, true);
-            await this.updateVehicleData();
+            const missing = (['client_id', 'client_secret', 'vehicle_id'] as const).filter(key => !this.config[key]);
+            if (missing.length > 0) {
+                this.log.warn(
+                    `Adapter is not configured completely (missing: ${missing.join(', ')}). ` +
+                        'Please enter client ID and secret, then select a vehicle in the instance settings.',
+                );
+                return;
+            }
+
+            for (const def of STATES) {
+                await this.extendObjectAsync(def.id, {
+                    type: 'state',
+                    common: {
+                        name: def.name,
+                        type: def.type,
+                        role: def.role,
+                        read: true,
+                        write: false,
+                        ...(def.unit ? { unit: def.unit } : {}),
+                    },
+                    native: {},
+                });
+            }
+            for (const id of OBSOLETE_STATES) {
+                if (await this.getObjectAsync(id)) {
+                    await this.delObjectAsync(id);
+                }
+            }
+
+            await this.poll();
+        } catch (e: any) {
+            this.log.error(`Error during startup: ${formatError(e)}`);
         }
     }
 
-    private async initSetObject(name: string, type: any, role: string): Promise<any> {
-        return this.setObjectNotExistsAsync(name, {
-            type: 'state',
-            common: {
-                name,
-                type,
-                role,
-                write: true,
-                read: true,
-            },
-            native: {},
-        });
+    private getIntervalMs(): number {
+        const configured = Number(this.config.interval);
+        const seconds = isNumber(configured) && configured > 0 ? configured : DEFAULT_INTERVAL_S;
+        return Math.max(seconds, MIN_INTERVAL_S) * 1000;
+    }
+
+    private async setConnected(connected: boolean): Promise<void> {
+        // compare with the stored value instead of a local cache: js-controller may reset it to false
+        await this.setStateChangedAsync('info.connection', connected, true);
+    }
+
+    private async requestToken(client_id: string, client_secret: string): Promise<TokenResponse> {
+        const response = await axios.post(
+            `${API_URL}/authentication`,
+            { client_id, client_secret, grant_type: 'app' },
+            { timeout: REQUEST_TIMEOUT_MS },
+        );
+        return response.data as TokenResponse;
     }
 
     private async getToken(): Promise<string> {
+        if (this.token && this.token.expiresAt > Date.now()) {
+            return this.token.value;
+        }
+        const token = await this.requestToken(this.config.client_id, this.config.client_secret);
+        const lifetimeMs = isNumber(token.expires_in) ? token.expires_in * 1000 : 0;
+        this.token = {
+            value: token.access_token,
+            expiresAt: Date.now() + Math.max(lifetimeMs - TOKEN_EXPIRY_MARGIN_MS, 0),
+        };
+        return token.access_token;
+    }
+
+    /**
+     * Runs an authenticated request; on HTTP 401 the token is renewed once and the request repeated.
+     *
+     * @param request performs the API call with the given access token
+     */
+    private async withToken<T>(request: (token: string) => Promise<T>): Promise<T> {
         try {
-            if (cache.get(this.config.client_id)) {
-                return cache.get(this.config.client_id);
-            }
-            const token = (await axios
-                .post(`${this.URL}/authentication`, {
-                    client_id: this.config.client_id,
-                    client_secret: this.config.client_secret,
-                    grant_type: 'app',
-                })
-                .then(e => e.data)) as {
-                access_token: string;
-                expires_in: number;
-            };
-            cache.put(this.config.client_id, token.access_token, (token.expires_in - 120) * 1000);
-            return token.access_token;
+            return await request(await this.getToken());
         } catch (e: any) {
-            this.log.error(e);
-            throw Error(e);
+            if (!isUnauthorized(e)) {
+                throw e;
+            }
+            this.token = undefined;
+            return request(await this.getToken());
+        }
+    }
+
+    private async poll(): Promise<void> {
+        try {
+            await this.updateVehicleData();
+            await this.setConnected(true);
+        } catch (e: any) {
+            this.log.error(`Could not update vehicle data: ${formatError(e)}`);
+            await this.setConnected(false).catch(() => undefined);
+        }
+        if (!this.unloading) {
+            this.pollTimer = this.setTimeout(() => {
+                void this.poll();
+            }, this.getIntervalMs());
         }
     }
 
     private async updateVehicleData(): Promise<void> {
-        try {
-            if (this.config.vehicle_id) {
-                const token = await this.getToken();
-                const recordUrl = `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`;
-                const status = (await axios
-                    .get(recordUrl, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    })
-                    .then(e => e.data)) as {
-                    odometer: number;
-                    range: number;
-                    level: number;
-                    charging: string;
-                    chargeRemainingTime: number;
-                    plugged: boolean;
-                    chargerPower: number;
-                    outTemp: number;
-                    elevation: number;
-                    latitude: number;
-                    longitude: number;
-                    timestamp: number;
-                    lastUpdate: number;
-                };
-                if (status.odometer > -1) {
-                    await this.setState('odometer', status.odometer, true);
-                }
-                if (status.range > -1) {
-                    await this.setState('range', status.range, true);
-                }
-                if (status.level > -1) {
-                    await this.setState('level', status.level, true);
-                }
-                if (status.charging && status.charging.length > 0) {
-                    await this.setState('charging', status.charging, true);
-                    if (status.chargeRemainingTime > 0 && status.charging !== 'Disconnected') {
-                        await this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
-                    }
-                }
-                if (status.plugged !== null) {
-                    await this.setState('plugged', status.plugged, true);
-                }
-                if (status.chargerPower > 0) {
-                    await this.setState('chargerPower', status.chargerPower, true);
-                }
-                if (status.latitude !== null) {
-                    await this.setState('latitude', status.latitude, true);
-                }
-                if (status.longitude !== null) {
-                    await this.setState('longitude', status.longitude, true);
-                }
-                if (status.outTemp > -100) {
-                    await this.setState('outTemp', status.outTemp, true);
-                }
-                if (status.elevation > -100) {
-                    await this.setState('elevation', status.elevation, true);
-                }
-                if (status.timestamp) {
-                    await this.setState(
-                        'timestamp',
-                        typeof status.timestamp === 'number' ? status.timestamp : new Date(status.timestamp).getTime(),
-                        true,
-                    );
-                }
-                if (status.lastUpdate) {
-                    await this.setState(
-                        'lastUpdate',
-                        typeof status.lastUpdate === 'number'
-                            ? status.lastUpdate
-                            : new Date(status.lastUpdate).getTime(),
-                        true,
-                    );
-                }
-            }
-        } catch (e: any) {
-            const msg = e?.response
-                ? `HTTP ${e.response.status} on ${e.config?.url ?? 'unknown URL'}: ${JSON.stringify(e.response.data)}`
-                : (e?.message ?? String(e));
-            this.log.error(`updateVehicleData: ${msg}`);
+        const url = `${API_URL}/tronity/vehicles/${this.config.vehicle_id}/last_record`;
+        const status = await this.withToken(async token => {
+            const response = await axios.get(url, {
+                headers: { Authorization: `Bearer ${token}` },
+                timeout: REQUEST_TIMEOUT_MS,
+            });
+            return response.data as VehicleRecord;
+        });
+        this.log.debug(`last_record: ${JSON.stringify(status)}`);
+
+        if (isNumber(status.odometer) && status.odometer >= 0) {
+            await this.setState('odometer', status.odometer, true);
         }
-        this.timeout = this.setTimeout(() => {
-            void this.updateVehicleData();
-        }, 60 * 1000);
+        if (isNumber(status.range) && status.range >= 0) {
+            await this.setState('range', status.range, true);
+        }
+        if (isNumber(status.level) && status.level >= 0) {
+            await this.setState('level', status.level, true);
+        }
+        if (typeof status.charging === 'string' && status.charging.length > 0) {
+            await this.setState('charging', status.charging, true);
+        }
+        if (typeof status.plugged === 'boolean') {
+            await this.setState('plugged', status.plugged, true);
+        }
+
+        // Once the car is disconnected, charging values must be reset instead of keeping the last value
+        const disconnected = status.charging === 'Disconnected' || status.plugged === false;
+        if (disconnected) {
+            await this.setState('chargerPower', 0, true);
+            await this.setState('chargeRemainingTime', 0, true);
+        } else {
+            if (isNumber(status.chargerPower) && status.chargerPower >= 0) {
+                await this.setState('chargerPower', status.chargerPower, true);
+            }
+            if (isNumber(status.chargeRemainingTime) && status.chargeRemainingTime >= 0) {
+                await this.setState('chargeRemainingTime', status.chargeRemainingTime, true);
+            }
+        }
+
+        if (isNumber(status.latitude)) {
+            await this.setState('latitude', status.latitude, true);
+        }
+        if (isNumber(status.longitude)) {
+            await this.setState('longitude', status.longitude, true);
+        }
+        const timestamp = toEpochMs(status.timestamp);
+        if (timestamp !== null) {
+            await this.setState('timestamp', timestamp, true);
+        }
+        const lastUpdate = toEpochMs(status.lastUpdate);
+        if (lastUpdate !== null) {
+            await this.setState('lastUpdate', lastUpdate, true);
+        }
     }
 
-    private async onMessage(msg: any): Promise<void> {
-        if (msg.command === 'validate') {
-            // credentials come from the current form values (selectSendTo sends all config fields)
-            const client_id = msg.message?.client_id || this.config.client_id;
-            const client_secret = msg.message?.client_secret || this.config.client_secret;
+    private async fetchVehicles(client_id: string, client_secret: string): Promise<Vehicle[]> {
+        const token = await this.requestToken(client_id, client_secret);
+        const response = await axios.get(`${API_URL}/tronity/vehicles?limit=1000`, {
+            headers: { Authorization: `Bearer ${token.access_token}` },
+            timeout: REQUEST_TIMEOUT_MS,
+        });
+        return (response.data as { data?: Vehicle[] }).data ?? [];
+    }
 
-            this.log.info('Try to validate login data and get vehicles');
-            try {
-                const token = (await axios
-                    .post(`${this.URL}/authentication`, {
-                        client_id,
-                        client_secret,
-                        grant_type: 'app',
-                    })
-                    .then(e => e.data)) as {
-                    access_token: string;
-                    expires_in: number;
-                };
-                const vehicles = (await axios
-                    .get(`${this.URL}/tronity/vehicles?limit=1000`, {
-                        headers: {
-                            Authorization: `Bearer ${token.access_token}`,
-                        },
-                    })
-                    .then(e => e.data)) as {
-                    data: Array<{ id: string; displayName: string; manufacture: string }>;
-                };
-                // Return [{label, value}] array as required by the selectSendTo component
-                const options = vehicles.data.map(v => ({
-                    label: `${v.manufacture} ${v.displayName}`,
-                    value: v.id,
-                }));
-                this.sendTo(msg.from, msg.command, options, msg.callback);
-            } catch (e: any) {
-                this.log.error(e);
-                this.sendTo(msg.from, msg.command, [], msg.callback);
-            }
+    private async onMessage(msg: ioBroker.Message): Promise<void> {
+        if (msg.command !== 'validate' && msg.command !== 'testConnection') {
+            return;
+        }
+        // The admin form sends the current (possibly unsaved) values via jsonData; fall back to the saved config
+        const message = (msg.message ?? {}) as { client_id?: string; client_secret?: string };
+        const client_id = message.client_id || this.config.client_id;
+        const client_secret = message.client_secret || this.config.client_secret;
+
+        if (msg.command === 'testConnection') {
+            await this.testConnection(msg, client_id, client_secret);
+            return;
+        }
+
+        if (!client_id || !client_secret) {
+            // nothing entered yet - no need to call the API
+            this.sendTo(msg.from, msg.command, [], msg.callback);
+            return;
+        }
+        this.log.info('Try to validate login data and get vehicles');
+        try {
+            const vehicles = await this.fetchVehicles(client_id, client_secret);
+            // Return [{label, value}] array as required by the selectSendTo component
+            const options = vehicles.map(v => ({
+                label: `${v.manufacture} ${v.displayName}`,
+                value: v.id,
+            }));
+            this.sendTo(msg.from, msg.command, options, msg.callback);
+        } catch (e: any) {
+            this.log.error(`Could not validate login data: ${formatError(e)}`);
+            this.sendTo(msg.from, msg.command, [], msg.callback);
+        }
+    }
+
+    /**
+     * Answers the "Check Login Data" button: `{result, args}` on success, `{error}` otherwise.
+     *
+     * @param msg message from the admin UI
+     * @param client_id client ID entered in the form
+     * @param client_secret client secret entered in the form
+     */
+    private async testConnection(msg: ioBroker.Message, client_id: string, client_secret: string): Promise<void> {
+        if (!client_id || !client_secret) {
+            this.sendTo(
+                msg.from,
+                msg.command,
+                { error: 'Please enter client ID and client secret first.' },
+                msg.callback,
+            );
+            return;
+        }
+        try {
+            const vehicles = await this.fetchVehicles(client_id, client_secret);
+            this.log.info(`Login data valid, ${vehicles.length} vehicle(s) found`);
+            this.sendTo(msg.from, msg.command, { result: 'ok', args: [String(vehicles.length)] }, msg.callback);
+        } catch (e: any) {
+            this.log.warn(`Login data check failed: ${formatError(e)}`);
+            const error =
+                isUnauthorized(e) || e?.response?.status === 400
+                    ? 'Login failed. Please check client ID and client secret.'
+                    : `Connection to TRONITY failed: ${e?.response ? `HTTP ${e.response.status}` : (e?.message ?? String(e))}`;
+            this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
     }
 
     private onUnload(callback: () => void): void {
         try {
-            if (this.timeout) {
-                this.clearTimeout(this.timeout);
+            this.unloading = true;
+            if (this.pollTimer) {
+                this.clearTimeout(this.pollTimer);
+                this.pollTimer = undefined;
             }
+        } finally {
             callback();
-        } catch {
-            callback();
-        }
-    }
-
-    private async onStateChange(id: string, state: ioBroker.State | null | undefined): Promise<void> {
-        if (!state) {
-            return;
-        }
-        this.log.debug(`State Change: ${id} to ${state.val} ack ${state.ack}`);
-
-        if (this.config.vehicle_id && state.ack === false) {
-            const currentId = id.substring(this.namespace.length + 1);
-            switch (currentId) {
-                case 'command.Charging':
-                    if (state.val) {
-                        try {
-                            const token = await this.getToken();
-                            await axios.post(
-                                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/start_charging`,
-                                {},
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                },
-                            );
-                            this.log.info('Try to start charging!');
-                        } catch (e: any) {
-                            this.log.error(e);
-                        }
-                    } else {
-                        try {
-                            const token = await this.getToken();
-                            await axios.post(
-                                `${this.URL}/tronity/vehicles/${this.config.vehicle_id}/control/stop_charging`,
-                                {},
-                                {
-                                    headers: {
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                },
-                            );
-                            this.log.info('Try to stop charging!');
-                        } catch (e: any) {
-                            this.log.error(e);
-                        }
-                    }
-                    break;
-            }
         }
     }
 }
